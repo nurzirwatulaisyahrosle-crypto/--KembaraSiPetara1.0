@@ -1483,43 +1483,19 @@ function setTranscript(
 
 // =====================================================
 // SPEECH RECOGNITION STATE
+// UNIVERSAL: iPhone / Android / Windows
 // =====================================================
 
 let recognitionSession = 0;
 
-let recognitionShouldStop =
-  false;
+let recognitionShouldStop = false;
+let recognitionEvaluated = false;
 
-let recognitionHadSpeech =
-  false;
+let currentVoiceData = null;
+let currentVoiceIsCP4 = false;
+let currentVoiceIsCP5 = false;
 
-let recognitionEvaluated =
-  false;
-
-let currentVoiceData =
-  null;
-
-let currentVoiceIsCP4 =
-  false;
-
-let currentVoiceIsCP5 =
-  false;
-
-/*
-  Digunakan untuk mobile.
-
-  Jika recognition pertama tamat sendiri
-  sebelum suara dikesan, game akan cuba
-  hidupkan semula sesi microphone.
-*/
-
-let recognitionRetryCount = 0;
-
-let recognitionRetryTimer =
-  null;
-
-const MAX_RECOGNITION_RETRIES =
-  2;
+let recognitionRestartTimer = null;
 
 
 // =====================================================
@@ -1529,12 +1505,10 @@ const MAX_RECOGNITION_RETRIES =
 function startRecognition(
   d,
   isCP4 = false,
-  isCP5 = false,
-  isRetry = false
+  isCP5 = false
 ) {
 
-  const SR =
-    getSpeechRecognition();
+  const SR = getSpeechRecognition();
 
   if (!SR) {
 
@@ -1552,167 +1526,143 @@ function startRecognition(
 
 
   // ===================================================
-  // HENTIKAN AUDIO
+  // JANGAN MULAKAN DUA RECOGNITION SERENTAK
   // ===================================================
 
-  /*
-    Audio soalan mesti dihentikan dahulu
-    sebelum microphone digunakan.
-  */
+  if (isRecording || recognition) {
+    return;
+  }
+
+
+  // ===================================================
+  // HENTIKAN AUDIO SOALAN DAHULU
+  // ===================================================
 
   stopSpeech();
 
 
   // ===================================================
-  // BATAL RETRY LAMA
+  // SIMPAN DATA SOALAN
   // ===================================================
 
-  if (
-    recognitionRetryTimer
-  ) {
-
-    clearTimeout(
-      recognitionRetryTimer
-    );
-
-    recognitionRetryTimer =
-      null;
-  }
+  currentVoiceData = d;
+  currentVoiceIsCP4 = isCP4;
+  currentVoiceIsCP5 = isCP5;
 
 
   // ===================================================
-  // BERSIHKAN SESI LAMA
+  // RESET TRANSKRIP
+  // HANYA APABILA MURID MULA RAKAMAN BARU
   // ===================================================
 
-  if (!isRetry) {
+  finalTranscript = "";
+  interimTranscript = "";
 
-    recognitionRetryCount =
-      0;
-
-    stopRecognition(true);
-
-  }
-
-  else {
-
-    /*
-      Jika ini auto-retry,
-      buang instance recognition lama
-      sebelum membuat instance baru.
-    */
-
-    if (recognition) {
-
-      const oldRecognition =
-        recognition;
-
-      recognition =
-        null;
-
-      isRecording =
-        false;
-
-      try {
-
-        oldRecognition.abort();
-
-      }
-
-      catch (e) {}
-
-    }
-  }
-
-
-  // ===================================================
-  // SESSION BARU
-  // ===================================================
+  recognitionShouldStop = false;
+  recognitionEvaluated = false;
 
   recognitionSession += 1;
 
-  const session =
-    recognitionSession;
+  const session = recognitionSession;
 
 
-  currentVoiceData =
-    d;
+  // ===================================================
+  // UI
+  // ===================================================
 
-  currentVoiceIsCP4 =
-    isCP4;
+  setTranscript(
+    "Mula bertutur..."
+  );
 
-  currentVoiceIsCP5 =
-    isCP5;
+  setStatus(
+    "🎙️ Membuka mikrofon..."
+  );
+
+  setMicIndicator(
+    true,
+    "🎤 Membuka mikrofon..."
+  );
 
 
-  if (!isRetry) {
+  // ===================================================
+  // MULA SESI PERTAMA
+  // ===================================================
 
-    finalTranscript =
-      "";
+  beginRecognitionSession(
+    SR,
+    session
+  );
+}
 
-    interimTranscript =
-      "";
 
+// =====================================================
+// BEGIN ONE RECOGNITION SESSION
+// =====================================================
+
+function beginRecognitionSession(
+  SR,
+  session
+) {
+
+  // Jangan hidupkan sesi lama
+  if (
+    session !== recognitionSession
+  ) {
+    return;
   }
 
 
-  recognitionShouldStop =
-    false;
+  // Murid sudah tekan berhenti
+  if (recognitionShouldStop) {
+    return;
+  }
 
-  recognitionHadSpeech =
-    false;
 
-  recognitionEvaluated =
-    false;
+  const r = new SR();
+
+  recognition = r;
 
 
   // ===================================================
-  // CIPTA SPEECH RECOGNITION
+  // SETTINGS
   // ===================================================
 
-  const r =
-    new SR();
-
-  recognition =
-    r;
-
-
-  r.lang =
-    "ms-MY";
+  r.lang = "ms-MY";
 
   /*
-    continuous=false lebih stabil
-    pada browser mobile.
+    FALSE digunakan dengan sengaja.
 
-    Murid masih boleh tekan
-    BERHENTI RAKAM secara manual.
+    Ini lebih serasi merentas:
+    - iPhone / Safari
+    - Android / Chrome
+    - Windows / Chrome
+    - Windows / Edge
+
+    Jika browser tamatkan sesi selepas satu frasa,
+    game akan membuka sesi baru secara automatik.
   */
 
-  r.continuous =
-    false;
+  r.continuous = false;
 
-  r.interimResults =
-    true;
+  r.interimResults = true;
 
-  r.maxAlternatives =
-    5;
+  r.maxAlternatives = 5;
 
 
   // ===================================================
-  // MICROPHONE START
+  // ON START
   // ===================================================
 
   r.onstart = () => {
 
     if (
-      session !==
-      recognitionSession
+      session !== recognitionSession
     ) {
       return;
     }
 
 
-    isRecording =
-      true;
+    isRecording = true;
 
 
     setRecordButton(
@@ -1729,36 +1679,20 @@ function startRecognition(
     setStatus(
       "Saya sedang mendengar..."
     );
-
-
-    if (
-      !finalTranscript.trim()
-    ) {
-
-      setTranscript(
-        "Mula bertutur..."
-      );
-
-    }
   };
 
 
   // ===================================================
-  // SUARA MULA DIKESAN
+  // SPEECH START
   // ===================================================
 
   r.onspeechstart = () => {
 
     if (
-      session !==
-      recognitionSession
+      session !== recognitionSession
     ) {
       return;
     }
-
-
-    recognitionHadSpeech =
-      true;
 
 
     setMicIndicator(
@@ -1766,50 +1700,27 @@ function startRecognition(
       "🗣️ Suara dikesan — teruskan bertutur..."
     );
 
-  };
 
-
-  // ===================================================
-  // SUARA BERHENTI
-  // ===================================================
-
-  r.onspeechend = () => {
-
-    if (
-      session !==
-      recognitionSession
-    ) {
-      return;
-    }
-
-
-    setMicIndicator(
-      true,
-      "🎙️ Memproses suara..."
+    setStatus(
+      "🗣️ Suara sedang dikesan..."
     );
-
   };
 
 
   // ===================================================
-  // RESULT SUARA
+  // RESULT
   // ===================================================
 
   r.onresult = event => {
 
     if (
-      session !==
-      recognitionSession
+      session !== recognitionSession
     ) {
       return;
     }
 
 
-    recognitionHadSpeech =
-      true;
-
-    interimTranscript =
-      "";
+    interimTranscript = "";
 
 
     for (
@@ -1821,23 +1732,22 @@ function startRecognition(
       const result =
         event.results[i];
 
-      const transcript =
+
+      const text =
         result[0].transcript;
 
 
-      if (
-        result.isFinal
-      ) {
+      if (result.isFinal) {
 
         finalTranscript +=
-          " " + transcript;
+          " " + text;
 
       }
 
       else {
 
         interimTranscript +=
-          " " + transcript;
+          " " + text;
 
       }
     }
@@ -1848,24 +1758,25 @@ function startRecognition(
         finalTranscript +
         " " +
         interimTranscript
-      ).trim();
+      )
+        .replace(/\s+/g, " ")
+        .trim();
 
 
     if (display) {
 
-      setTranscript(
-        display
-      );
+      setTranscript(display);
+
 
       setStatus(
-        "🎙️ Suara berjaya dikesan."
+        "✅ Suara dikesan."
       );
+
 
       setMicIndicator(
         true,
         "🗣️ Suara dikesan"
       );
-
     }
   };
 
@@ -1877,8 +1788,7 @@ function startRecognition(
   r.onerror = event => {
 
     if (
-      session !==
-      recognitionSession
+      session !== recognitionSession
     ) {
       return;
     }
@@ -1888,30 +1798,29 @@ function startRecognition(
       event.error;
 
 
-    isRecording =
-      false;
+    /*
+      Kalau murid memang tekan BERHENTI,
+      abaikan error daripada proses stop.
+    */
 
-    setRecordButton(
-      false
-    );
+    if (recognitionShouldStop) {
+      return;
+    }
 
 
-    // ===============================================
-    // PERMISSION DITOLAK
-    // ===============================================
+    // =================================================
+    // PERMISSION
+    // =================================================
 
     if (
       error === "not-allowed" ||
       error === "service-not-allowed"
     ) {
 
-      recognition =
-        null;
+      recognition = null;
+      isRecording = false;
 
-
-      setStatus(
-        "⚠️ Akses mikrofon tidak dibenarkan."
-      );
+      setRecordButton(false);
 
 
       setMicIndicator(
@@ -1920,207 +1829,110 @@ function startRecognition(
       );
 
 
+      setStatus(
+        "⚠️ Sila benarkan akses mikrofon dan cuba lagi."
+      );
+
+
       return;
     }
 
 
-    // ===============================================
-    // MOBILE RETRY
-    // ===============================================
-
-    const retryable =
-      error === "no-speech" ||
-      error === "audio-capture" ||
-      error === "network" ||
-      error === "aborted";
-
+    // =================================================
+    // AUDIO CAPTURE
+    // =================================================
 
     if (
-      retryable &&
-      !recognitionShouldStop &&
-      recognitionRetryCount <
-        MAX_RECOGNITION_RETRIES
+      error === "audio-capture"
     ) {
 
-      recognitionRetryCount +=
-        1;
-
-
-      recognition =
-        null;
-
-
-      setMicIndicator(
-        false,
-        "🎤 Menyambung semula mikrofon..."
-      );
+      recognition = null;
 
 
       setStatus(
-        "🎙️ Mikrofon sedang disambungkan semula..."
+        "🎙️ Menyambung semula mikrofon..."
       );
-
-
-      recognitionRetryTimer =
-        window.setTimeout(
-          () => {
-
-            recognitionRetryTimer =
-              null;
-
-
-            /*
-              Jangan restart jika pengguna
-              sudah keluar/tukar soalan.
-            */
-
-            if (
-              session !==
-              recognitionSession
-            ) {
-              return;
-            }
-
-
-            if (
-              recognitionShouldStop
-            ) {
-              return;
-            }
-
-
-            startRecognition(
-              currentVoiceData,
-              currentVoiceIsCP4,
-              currentVoiceIsCP5,
-              true
-            );
-
-          },
-          400
-        );
 
 
       return;
     }
 
 
-    recognition =
-      null;
+    // =================================================
+    // NO SPEECH
+    // =================================================
 
+    /*
+      Jangan terus anggap gagal.
 
-    // ===============================================
-    // TIADA SUARA
-    // ===============================================
+      Safari/Chrome boleh menghasilkan
+      no-speech apabila satu sesi pendek tamat.
+
+      onend akan membuka sesi baru.
+    */
 
     if (
       error === "no-speech"
     ) {
 
       setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
+        "🎙️ Mikrofon masih menunggu suara..."
       );
 
 
-      setMicIndicator(
-        false,
-        "🎤 Tiada suara dikesan"
-      );
-
+      return;
     }
 
 
-    // ===============================================
-    // AUDIO CAPTURE
-    // ===============================================
+    // =================================================
+    // ABORTED
+    // =================================================
 
-    else if (
-      error === "audio-capture"
+    if (
+      error === "aborted"
     ) {
 
-      setStatus(
-        "⚠️ Mikrofon tidak dapat digunakan. Cuba sekali lagi."
-      );
-
-
-      setMicIndicator(
-        false,
-        "🎤 Mikrofon tidak tersedia"
-      );
-
+      return;
     }
 
 
-    // ===============================================
-    // ERROR LAIN
-    // ===============================================
+    // =================================================
+    // NETWORK / ERROR LAIN
+    // =================================================
 
-    else if (
-      error !== "aborted"
-    ) {
-
-      setStatus(
-        "⚠️ Rakaman terganggu. Cuba sekali lagi."
-      );
-
-
-      setMicIndicator(
-        false,
-        "🎤 Rakaman terganggu"
-      );
-
-    }
+    setStatus(
+      "🎙️ Rakaman sedang disambungkan semula..."
+    );
   };
 
 
   // ===================================================
-  // RECOGNITION TAMAT
+  // END
   // ===================================================
 
   r.onend = () => {
 
     if (
-      session !==
-      recognitionSession
+      session !== recognitionSession
     ) {
       return;
     }
 
 
-    const shouldEvaluate =
-      recognitionShouldStop;
-
-
-    isRecording =
-      false;
-
-
-    if (
-      recognition === r
-    ) {
-
-      recognition =
-        null;
-
+    if (recognition === r) {
+      recognition = null;
     }
 
 
-    setRecordButton(
-      false
-    );
+    // =================================================
+    // MURID TEKAN BERHENTI
+    // =================================================
 
+    if (recognitionShouldStop) {
 
-    // ===============================================
-    // PENGGUNA TEKAN BERHENTI RAKAM
-    // ===============================================
+      isRecording = false;
 
-    if (
-      shouldEvaluate &&
-      !recognitionEvaluated
-    ) {
-
-      recognitionEvaluated =
-        true;
+      setRecordButton(false);
 
 
       setMicIndicator(
@@ -2129,54 +1941,9 @@ function startRecognition(
       );
 
 
-      evaluateVoiceResponse(
-        currentVoiceData,
-        currentVoiceIsCP4,
-        currentVoiceIsCP5
-      );
+      if (!recognitionEvaluated) {
 
-
-      return;
-    }
-
-
-    // ===============================================
-    // ADA SUARA
-    // ===============================================
-
-    /*
-      Pada mobile continuous=false boleh tamat
-      sendiri selepas murid selesai bercakap.
-
-      Kalau kita sudah menerima suara,
-      terus nilai jawapan supaya murid
-      tidak perlu menekan X / masuk semula.
-    */
-
-    if (
-      !shouldEvaluate &&
-      recognitionHadSpeech &&
-      !recognitionEvaluated
-    ) {
-
-      const spokenNow =
-        (
-          finalTranscript +
-          " " +
-          interimTranscript
-        ).trim();
-
-
-      if (spokenNow) {
-
-        recognitionEvaluated =
-          true;
-
-
-        setMicIndicator(
-          false,
-          "🎤 Mikrofon tidak aktif"
-        );
+        recognitionEvaluated = true;
 
 
         evaluateVoiceResponse(
@@ -2184,118 +1951,84 @@ function startRecognition(
           currentVoiceIsCP4,
           currentVoiceIsCP5
         );
-
-
-        return;
       }
-    }
-
-
-    // ===============================================
-    // MOBILE FIRST-ENTRY FIX
-    // ===============================================
-
-    /*
-      Inilah kes yang cikgu alami:
-
-      masuk Misi 3/4/5 kali pertama,
-      microphone tidak detect.
-
-      Sebelum ini perlu:
-      X → masuk balik.
-
-      Sekarang kalau sesi pertama mati
-      tanpa mendengar suara, sistem cuba
-      buka recognition baru secara automatik.
-    */
-
-    if (
-      !shouldEvaluate &&
-      !recognitionHadSpeech &&
-      recognitionRetryCount <
-        MAX_RECOGNITION_RETRIES &&
-      !recognitionRetryTimer
-    ) {
-
-      recognitionRetryCount +=
-        1;
-
-
-      setMicIndicator(
-        false,
-        "🎤 Menyambung semula mikrofon..."
-      );
-
-
-      setStatus(
-        "🎙️ Mikrofon sedang disambungkan semula..."
-      );
-
-
-      recognitionRetryTimer =
-        window.setTimeout(
-          () => {
-
-            recognitionRetryTimer =
-              null;
-
-
-            if (
-              session !==
-              recognitionSession
-            ) {
-              return;
-            }
-
-
-            if (
-              recognitionShouldStop
-            ) {
-              return;
-            }
-
-
-            startRecognition(
-              currentVoiceData,
-              currentVoiceIsCP4,
-              currentVoiceIsCP5,
-              true
-            );
-
-          },
-          400
-        );
 
 
       return;
     }
 
 
-    // ===============================================
-    // RETRY HABIS
-    // ===============================================
+    // =================================================
+    // BROWSER TAMATKAN SESI SENDIRI
+    // =================================================
+
+    /*
+      PENTING:
+
+      Kita TIDAK evaluate lagi.
+
+      Kita juga TIDAK suruh murid tekan X.
+
+      Kita buka recognition baru dan
+      terus kumpulkan transcript.
+
+      Ini membolehkan sistem yang sama
+      digunakan pada iPhone, Android
+      dan komputer.
+    */
+
 
     setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
+      true,
+      "🎙️ Mikrofon aktif — sedang mendengar..."
     );
 
 
-    if (
-      !recognitionHadSpeech
-    ) {
+    setStatus(
+      "Saya sedang mendengar..."
+    );
 
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
+
+    if (recognitionRestartTimer) {
+
+      clearTimeout(
+        recognitionRestartTimer
       );
-
     }
 
+
+    recognitionRestartTimer =
+      setTimeout(
+        () => {
+
+          recognitionRestartTimer = null;
+
+
+          if (
+            session !== recognitionSession
+          ) {
+            return;
+          }
+
+
+          if (recognitionShouldStop) {
+            return;
+          }
+
+
+          beginRecognitionSession(
+            SR,
+            session
+          );
+
+        },
+        300
+      );
   };
 
 
   // ===================================================
-  // START SPEECH RECOGNITION
+  // START
   // ===================================================
 
   try {
@@ -2306,74 +2039,60 @@ function startRecognition(
 
   catch (error) {
 
-    recognition =
-      null;
+    recognition = null;
 
-    isRecording =
-      false;
 
-    setRecordButton(
-      false
+    /*
+      Browser mungkin belum sempat
+      melepaskan sesi sebelumnya.
+
+      Tunggu sekejap dan cuba lagi.
+    */
+
+    if (
+      session !== recognitionSession ||
+      recognitionShouldStop
+    ) {
+      return;
+    }
+
+
+    setStatus(
+      "🎙️ Menyambung mikrofon..."
     );
 
 
-    // Cuba semula jika browser mobile
-    // belum bersedia membuka microphone.
+    if (recognitionRestartTimer) {
 
-    if (
-      recognitionRetryCount <
-      MAX_RECOGNITION_RETRIES
-    ) {
-
-      recognitionRetryCount +=
-        1;
-
-
-      setMicIndicator(
-        false,
-        "🎤 Menyambung semula mikrofon..."
+      clearTimeout(
+        recognitionRestartTimer
       );
-
-
-      setStatus(
-        "🎙️ Mikrofon sedang disambungkan semula..."
-      );
-
-
-      recognitionRetryTimer =
-        window.setTimeout(
-          () => {
-
-            recognitionRetryTimer =
-              null;
-
-
-            startRecognition(
-              currentVoiceData,
-              currentVoiceIsCP4,
-              currentVoiceIsCP5,
-              true
-            );
-
-          },
-          400
-        );
-
     }
 
-    else {
 
-      setMicIndicator(
-        false,
-        "🎤 Mikrofon tidak aktif"
+    recognitionRestartTimer =
+      setTimeout(
+        () => {
+
+          recognitionRestartTimer = null;
+
+
+          if (
+            session !== recognitionSession ||
+            recognitionShouldStop
+          ) {
+            return;
+          }
+
+
+          beginRecognitionSession(
+            SR,
+            session
+          );
+
+        },
+        400
       );
-
-
-      setStatus(
-        "⚠️ Rakaman belum dapat dimulakan. Tekan MULA RAKAM dan cuba lagi."
-      );
-
-    }
   }
 }
 
@@ -2387,138 +2106,63 @@ function stopRecognition(
 ) {
 
   // ===================================================
-  // BATAL AUTO RETRY
+  // BATAL RESTART TIMER
   // ===================================================
 
-  if (
-    recognitionRetryTimer
-  ) {
+  if (recognitionRestartTimer) {
 
     clearTimeout(
-      recognitionRetryTimer
+      recognitionRestartTimer
     );
 
-    recognitionRetryTimer =
-      null;
+    recognitionRestartTimer = null;
   }
-
-
-  // ===================================================
-  // TIADA RECOGNITION AKTIF
-  // ===================================================
-
-  if (!recognition) {
-
-    isRecording =
-      false;
-
-
-    setRecordButton(
-      false
-    );
-
-
-    if (silent) {
-
-      /*
-        Naikkan session supaya callback
-        lama tidak boleh mengganggu
-        misi/soalan baru.
-      */
-
-      recognitionSession +=
-        1;
-
-
-      recognitionShouldStop =
-        false;
-
-
-      recognitionEvaluated =
-        true;
-
-
-      recognitionHadSpeech =
-        false;
-
-
-      recognitionRetryCount =
-        0;
-
-
-      finalTranscript =
-        "";
-
-
-      interimTranscript =
-        "";
-
-    }
-
-
-    return;
-  }
-
-
-  const r =
-    recognition;
 
 
   // ===================================================
   // SILENT STOP
-  // Tukar soalan / keluar misi
   // ===================================================
+
+  /*
+    Digunakan apabila:
+    - keluar misi
+    - tukar soalan
+    - selesai checkpoint
+
+    Silent stop TIDAK menilai jawapan.
+  */
 
   if (silent) {
 
-    recognitionSession +=
-      1;
+    recognitionShouldStop = true;
+
+    recognitionSession += 1;
 
 
-    recognitionShouldStop =
-      false;
+    const r = recognition;
+
+    recognition = null;
+
+    isRecording = false;
+
+    recognitionEvaluated = true;
 
 
-    recognitionEvaluated =
-      true;
+    if (r) {
 
+      try {
+        r.abort();
+      }
 
-    recognitionHadSpeech =
-      false;
-
-
-    recognitionRetryCount =
-      0;
-
-
-    recognition =
-      null;
-
-
-    isRecording =
-      false;
-
-
-    finalTranscript =
-      "";
-
-
-    interimTranscript =
-      "";
-
-
-    try {
-
-      r.abort();
-
+      catch (e) {}
     }
 
-    catch (e) {}
+
+    finalTranscript = "";
+    interimTranscript = "";
 
 
-    setRecordButton(
-      false
-    );
+    setRecordButton(false);
 
 
     setMicIndicator(
@@ -2532,11 +2176,10 @@ function stopRecognition(
 
 
   // ===================================================
-  // USER TEKAN BERHENTI RAKAM
+  // MURID TEKAN BERHENTI RAKAM
   // ===================================================
 
-  recognitionShouldStop =
-    true;
+  recognitionShouldStop = true;
 
 
   setStatus(
@@ -2550,45 +2193,60 @@ function stopRecognition(
   );
 
 
-  try {
-
-    r.stop();
-
-  }
-
-  catch (e) {
-
-    recognition =
-      null;
+  const r = recognition;
 
 
-    isRecording =
-      false;
+  // ===================================================
+  // ADA RECOGNITION AKTIF
+  // ===================================================
 
+  if (r) {
 
-    setRecordButton(
-      false
-    );
+    try {
 
+      r.stop();
 
-    if (
-      !recognitionEvaluated
-    ) {
+      return;
 
-      recognitionEvaluated =
-        true;
+    }
 
+    catch (e) {
 
-      evaluateVoiceResponse(
-        currentVoiceData,
-        currentVoiceIsCP4,
-        currentVoiceIsCP5
-      );
+      recognition = null;
 
     }
   }
-}
 
+
+  // ===================================================
+  // RECOGNITION SUDAH TAMAT SENDIRI
+  // ===================================================
+
+  /*
+    Ada kemungkinan browser tamatkan sesi
+    tepat sebelum murid tekan BERHENTI.
+
+    Transcript masih ada, jadi kita boleh
+    terus menilai jawapan.
+  */
+
+  isRecording = false;
+
+  setRecordButton(false);
+
+
+  if (!recognitionEvaluated) {
+
+    recognitionEvaluated = true;
+
+
+    evaluateVoiceResponse(
+      currentVoiceData,
+      currentVoiceIsCP4,
+      currentVoiceIsCP5
+    );
+  }
+}
 
 // =====================================================
 // VOICE RESPONSE EVALUATION
