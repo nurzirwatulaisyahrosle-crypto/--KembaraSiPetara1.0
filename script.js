@@ -1868,55 +1868,71 @@ function startRecognition(
 // STOP RECOGNITION
 // =====================================================
 
-function stopRecognition(
-  silent = false
-) {
+function stopRecognition(silent = false) {
 
-  const r =
-    recognition;
+  const r = recognition;
+
+  // ===================================================
+  // TIADA RECOGNITION YANG SEDANG AKTIF
+  // ===================================================
+
+  if (!r) {
+
+    isRecording = false;
+
+    setRecordButton(false);
+
+    if (silent) {
+      finalTranscript = "";
+      interimTranscript = "";
+    }
+
+    return;
+  }
 
 
   // ===================================================
-  // SILENT STOP
-  // digunakan semasa tukar soalan / keluar misi
+  // TUKAR SOALAN / KELUAR MISI
   // ===================================================
 
   if (silent) {
 
-    recognitionSession++;
-
     recognitionShouldStop = true;
     recognitionEvaluated = true;
 
-    recognition = null;
-    isRecording = false;
+    /*
+      PENTING UNTUK IPHONE / SAFARI:
 
+      Jangan:
+      - abort()
+      - buang onend
+      - terus recognition = null
 
-    if (r) {
+      Biarkan WebKit tutup sesi sendiri.
+    */
 
-      // Putuskan event lama dahulu
-      r.onstart = null;
-      r.onspeechstart = null;
-      r.onresult = null;
-      r.onerror = null;
-      r.onend = null;
+    try {
 
-      try {
-        r.abort();
-      } catch (e) {}
+      r.stop();
+
+    } catch (e) {
+
+      if (recognition === r) {
+        recognition = null;
+      }
+
+      isRecording = false;
+
+      finalTranscript = "";
+      interimTranscript = "";
+
+      setRecordButton(false);
+
+      setMicIndicator(
+        false,
+        "🎤 Mikrofon tidak aktif"
+      );
     }
-
-
-    finalTranscript = "";
-    interimTranscript = "";
-
-
-    setRecordButton(false);
-
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
 
     return;
   }
@@ -1928,67 +1944,57 @@ function stopRecognition(
 
   recognitionShouldStop = true;
 
-
   setStatus(
     "⏳ Memproses rakaman..."
   );
-
 
   setMicIndicator(
     false,
     "⏹️ Rakaman dihentikan"
   );
 
+  try {
 
-  if (r) {
+    r.stop();
 
-    try {
+  } catch (e) {
 
-      r.stop();
-      return;
-
-    } catch (e) {
-
+    if (recognition === r) {
       recognition = null;
-      isRecording = false;
     }
-  }
 
+    isRecording = false;
 
-  // Kalau recognition sudah tamat sendiri
-  isRecording = false;
+    setRecordButton(false);
 
-  setRecordButton(false);
+    const heard =
+      (
+        finalTranscript +
+        " " +
+        interimTranscript
+      )
+        .replace(/\s+/g, " ")
+        .trim();
 
+    if (
+      heard &&
+      !recognitionEvaluated
+    ) {
 
-  const heard =
-    (
-      finalTranscript +
-      " " +
-      interimTranscript
-    )
-      .replace(/\s+/g, " ")
-      .trim();
+      recognitionEvaluated = true;
 
+      evaluateVoiceResponse(
+        currentVoiceData,
+        currentVoiceIsCP4,
+        currentVoiceIsCP5
+      );
 
-  if (
-    heard &&
-    !recognitionEvaluated
-  ) {
+    } else if (!heard) {
 
-    recognitionEvaluated = true;
-
-    evaluateVoiceResponse(
-      currentVoiceData,
-      currentVoiceIsCP4,
-      currentVoiceIsCP5
-    );
-
-  } else if (!heard) {
-
-    setStatus(
-      "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-    );
+      setStatus(
+        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
+      );
+    }
   }
 }
 
