@@ -9,85 +9,362 @@
 <body>
 
 <section id="startScreen" class="screen start-screen">
+  <div class="start-decor start-decor-1">🌳</div>
+  <div class="start-decor start-decor-2">⭐</div>
+  <div class="start-decor start-decor-3">☁️</div>
+
   <div class="start-card">
     <div class="logo-badge">PeTaRa</div>
     <h1>Kembara Si PeTaRa</h1>
     <p class="meaning">PeTaRa = Petah Bicara</p>
     <p class="tagline">Dengar • Faham • Tutur • Jelajah</p>
-    <label for="studentName">Nama Pengembara</label>
-    <input id="studentName" type="text" maxlength="24" autocomplete="off" placeholder="Masukkan nama kamu">
-    <p id="nameError" class="error" aria-live="polite"></p>
-    <button id="startBtn" class="primary-btn">🎮 MULA BERMAIN</button>
+
+    <div class="name-box">
+      <label for="studentName">🌟 Nama Pengembara</label>
+
+      <input
+        id="studentName"
+        type="text"
+        maxlength="24"
+        autocomplete="off"
+        placeholder="Masukkan nama kamu"
+      >
+
+      <p
+        id="nameError"
+        class="error"
+        aria-live="polite"
+      ></p>
+
+      <button
+        id="startBtn"
+        class="primary-btn"
+      >
+        🎮 MULA BERMAIN
+      </button>
+    </div>
   </div>
 </section>
 
-<section id="gameScreen" class="screen game-screen hidden">
-  <div id="worldViewport">
-    <div id="world">
-      <img id="worldMap" src="assets/map/petara-world-map.png" alt="Dunia Kembara Si PeTaRa">
 
-      <div id="checkpointLayer" aria-hidden="true"></div>
+<section
+  id="prepScreen"
+  class="screen prep-screen hidden"
+>
+  <div class="prep-card">
 
-      <div id="player">
-        <div id="playerName">Pengembara</div>
-        <img id="playerSprite" src="assets/player/petara-idle.png" alt="Si PeTaRa">
-      </div>
+    <div class="prep-icon">🌟</div>
+
+    <h2>
+      PERSEDIAAN SEBELUM BERMAIN
+    </h2>
+
+    <div class="prep-list">
+
+      <p>
+        🎧 Gunakan
+        <strong>
+          fon telinga atau set kepala
+        </strong>
+        untuk membantu anda mendengar audio
+        dan rakaman suara dengan lebih jelas.
+      </p>
+
+      <p>
+        🎤 Pastikan anda
+        <strong>
+          membenarkan akses kepada mikrofon
+        </strong>
+        pada peranti yang digunakan.
+      </p>
+
+      <p>
+        🗣️ Pastikan anda
+        <strong>
+          bertutur dengan jelas
+        </strong>
+        semasa memberikan respons secara lisan.
+      </p>
+
     </div>
 
+    <div class="mic-test-box">
+
+      <h3>
+        🎤 UJI MIKROFON SEBELUM BERMAIN
+      </h3>
+
+      <p class="test-instruction">
+        Sebut:
+        <strong>
+          “Hai, PeTaRa!”
+        </strong>
+      </p>
+
+      <button
+        id="testMicBtn"
+        class="test-mic-btn"
+      >
+        🎤 UJI MIKROFON
+      </button>
+
+      <p
+        id="micTestStatus"
+        class="mic-test-status"
+        aria-live="polite"
+      ></p>
+
+    </div>
+
+    <div class="prep-ready">
+
+      <button
+        id="readyBtn"
+        class="primary-btn"
+      >
+        🚀 MULAKAN KEMBARA
+      </button>
+
+    </div>
+
+  </div>
+</section>
+
+
+<section
+  id="gameScreen"
+  class="screen game-screen hidden"
+>
+
+  <div id="worldViewport">
+
+    <div id="world">
+
+      <img
+        id="worldMap"
+        src="assets/map/petara-world-map.png"
+        alt="Dunia Kembara Si PeTaRa"
+      >
+
+      <div
+        id="checkpointLayer"
+        aria-hidden="true"
+      ></div>
+
+      <div id="player">
+
+        <div id="playerName">
+          Pengembara
+        </div>
+
+        <img
+          id="playerSprite"
+          src="assets/player/petara-idle.png"
+          alt="Si PeTaRa"
+        >
+
+      </div>
+
+    </div>
+
+
     <header id="hud">
+
       <div class="hud-player">
-        <img src="assets/player/petara-idle.png" alt="">
+
+        <img
+          src="assets/player/petara-idle.png"
+          alt=""
+        >
+
         <div>
           <span>PENGEMBARA</span>
           <strong id="hudName">-</strong>
         </div>
+
       </div>
-      <div class="hud-score">⭐ <strong id="score">0</strong></div>
-      <div class="hud-progress">🚩 <strong id="progress">0/5</strong></div>
+
+
+      <div class="hud-score">
+        ⭐
+        <strong id="score">
+          0
+        </strong>
+      </div>
+
+
+      <div class="hud-progress">
+        🚩
+        <strong id="progress">
+          0/5
+        </strong>
+      </div>
+
     </header>
 
+
     <div id="movementHelp">
-      <strong>CARA BERGERAK</strong>
-      <span>W / A / S / D atau anak panah</span>
+
+      <strong>
+        CARA BERGERAK
+      </strong>
+
+      <span>
+        W / A / S / D atau anak panah
+      </span>
+
     </div>
 
-    <div id="interactionMessage" class="interaction hidden"></div>
-    <button id="interactBtn" class="interact-btn hidden">✨ MASUK MISI</button>
 
-    <div id="dpad" aria-label="Kawalan pergerakan">
-      <button data-key="ArrowUp" class="up">▲</button>
-      <button data-key="ArrowLeft" class="left">◀</button>
-      <button data-key="ArrowDown" class="down">▼</button>
-      <button data-key="ArrowRight" class="right">▶</button>
+    <div
+      id="interactionMessage"
+      class="interaction hidden"
+    ></div>
+
+
+    <button
+      id="interactBtn"
+      class="interact-btn hidden"
+    >
+      ✨ MASUK MISI
+    </button>
+
+
+    <div
+      id="dpad"
+      aria-label="Kawalan pergerakan"
+    >
+
+      <button
+        data-key="ArrowUp"
+        class="up"
+      >
+        ▲
+      </button>
+
+      <button
+        data-key="ArrowLeft"
+        class="left"
+      >
+        ◀
+      </button>
+
+      <button
+        data-key="ArrowDown"
+        class="down"
+      >
+        ▼
+      </button>
+
+      <button
+        data-key="ArrowRight"
+        class="right"
+      >
+        ▶
+      </button>
+
     </div>
+
   </div>
+
 </section>
 
-<div id="checkpointModal" class="modal hidden">
+
+<div
+  id="checkpointModal"
+  class="modal hidden"
+>
+
   <div class="modal-card activity-card">
-    <button id="closeModal" class="close-btn" aria-label="Tutup">×</button>
-    <div class="modal-icon">🚩</div>
-    <h2 id="modalTitle">Misi</h2>
+
+    <button
+      id="closeModal"
+      class="close-btn"
+      aria-label="Tutup"
+    >
+      ×
+    </button>
+
+    <div class="modal-icon">
+      🚩
+    </div>
+
+    <h2 id="modalTitle">
+      Misi
+    </h2>
+
     <div id="activityArea"></div>
+
   </div>
+
 </div>
 
-<div id="resultModal" class="modal hidden">
+
+<div
+  id="resultModal"
+  class="modal hidden"
+>
+
   <div class="modal-card result-card">
-    <div class="trophy">🏆</div>
-    <h2>TAHNIAH!</h2>
-    <p id="resultText"></p>
-    <div class="result-score">⭐ <span id="resultScore">0</span> markah</div>
-    <p>🚩 Checkpoint: <strong>5/5</strong></p>
-    <p>🎧 Mendengar selesai • 🎙️ Bertutur selesai</p>
-    <p class="result-cheer">🌟 Tahniah! Kamu kini seorang Si PeTaRa yang hebat!</p>
-    <div class="activity-actions">
-      <button id="restartBtn" class="primary-btn">🔄 MAIN SEMULA</button>
-      <button id="homeBtn" class="next-btn">🏠 LAMAN UTAMA</button>
+
+    <div class="trophy">
+      🏆
     </div>
+
+    <h2>
+      TAHNIAH!
+    </h2>
+
+    <p id="resultText"></p>
+
+    <div class="result-score">
+      ⭐
+      <span id="resultScore">
+        0
+      </span>
+      markah
+    </div>
+
+    <p>
+      🚩 Checkpoint:
+      <strong>5/5</strong>
+    </p>
+
+    <p>
+      🎧 Mendengar selesai
+      •
+      🎙️ Bertutur selesai
+    </p>
+
+    <p class="result-cheer">
+      🌟 Tahniah! Kamu kini seorang
+      Si PeTaRa yang hebat!
+    </p>
+
+    <div class="activity-actions">
+
+      <button
+        id="restartBtn"
+        class="primary-btn"
+      >
+        🔄 MAIN SEMULA
+      </button>
+
+      <button
+        id="homeBtn"
+        class="next-btn"
+      >
+        🏠 LAMAN UTAMA
+      </button>
+
+    </div>
+
   </div>
+
 </div>
+
 
 <script src="script.js"></script>
+
 </body>
 </html>
