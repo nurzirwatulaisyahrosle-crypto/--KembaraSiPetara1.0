@@ -2200,32 +2200,6 @@ and (max-height: 600px) {
     margin-top: 10px;
   }
 }
-/* =========================================
-   WARNA BACKGROUND MENGIKUT SOALAN
-========================================= */
-
-.question-page {
-  width: 100%;
-  border-radius: 20px;
-  padding: 16px 18px 20px;
-  box-sizing: border-box;
-  transition: background-color 0.35s ease;
-}
-
-/* Soalan 1 — Pink */
-.question-page.question-1 {
-  background-color: #E889B3;
-}
-
-/* Soalan 2 — Biru */
-.question-page.question-2 {
-  background-color: #79A6DC;
-}
-
-/* Soalan 3 — Kuning */
-.question-page.question-3 {
-  background-color: #EBCF68;
-}
 
 /* MISI kecil di sebelah kiri */
 .activity-mission {
