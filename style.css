@@ -2104,16 +2104,10 @@ and (max-height: 600px) {
 }
 
 /* SOALAN 1 — krim / putih lembut */
-.question-page.question-1 {
-  background-color: #E889B3;
-}
-
-.question-page.question-2 {
-  background-color: #79A6DC;
-}
-
+.question-page.question-1,
+.question-page.question-2,
 .question-page.question-3 {
-  background-color: #EBCF68;
+  background-color: #ffffff;
 }
 
 /* =====================================================
