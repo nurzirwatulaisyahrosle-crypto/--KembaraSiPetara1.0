@@ -12,7 +12,12 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+
+  font-family:
+    "Comic Sans MS",
+    "Comic Sans",
+    cursive;
+
   background: #071923;
   color: #fff;
 }
@@ -41,80 +46,239 @@ button {
 ===================================================== */
 
 .start-screen {
+  position: relative;
+
   display: grid;
   place-items: center;
+
+  padding: 20px;
+
+  overflow: hidden;
+
   background:
     radial-gradient(
-      circle at 50% 30%,
-      #246c62,
-      #071923 72%
+      circle at 50% 20%,
+      #fff9b8 0%,
+      #a8edff 28%,
+      #63cfee 55%,
+      #5bcf79 100%
     );
-  padding: 20px;
+}
+
+.start-screen::before {
+  content: "";
+
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: -80px;
+
+  height: 230px;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      #73d25f 0%,
+      #46ad55 58%,
+      #318b49 100%
+    );
+
+  border-radius: 50% 50% 0 0;
+
+  opacity: 0.96;
+}
+
+.start-decor {
+  position: absolute;
+  z-index: 1;
+
+  user-select: none;
+  pointer-events: none;
+
+  filter:
+    drop-shadow(
+      0 5px 3px #0002
+    );
+}
+
+.start-decor-1 {
+  left: 5%;
+  bottom: 8%;
+
+  font-size:
+    clamp(65px, 10vw, 125px);
+}
+
+.start-decor-2 {
+  right: 9%;
+  top: 11%;
+
+  font-size:
+    clamp(38px, 6vw, 72px);
+
+  animation:
+    starFloat 2.4s ease-in-out infinite;
+}
+
+.start-decor-3 {
+  left: 9%;
+  top: 10%;
+
+  font-size:
+    clamp(45px, 7vw, 85px);
+
+  opacity: 0.92;
+}
+
+@keyframes starFloat {
+  50% {
+    transform:
+      translateY(-10px)
+      rotate(8deg);
+  }
 }
 
 .start-card {
-  width: min(520px, 94vw);
-  padding: 34px;
+  position: relative;
+  z-index: 5;
+
+  width: min(560px, 94vw);
+
+  padding: 34px 36px;
+
   text-align: center;
-  border: 4px solid #8fd6d0;
-  border-radius: 24px;
-  background: rgba(6, 35, 51, 0.94);
-  box-shadow: 0 18px 60px #0008;
+
+  border:
+    5px solid #fff;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(255, 248, 207, 0.97)
+    );
+
+  color: #214d54;
+
+  box-shadow:
+    0 10px 0 #29985d,
+    0 22px 45px #174f5350;
 }
 
 .logo-badge {
   display: inline-block;
-  background: #ffcf3f;
-  color: #382400;
+
+  padding: 8px 20px;
+
+  background: #ffca3a;
+  color: #573600;
+
+  border:
+    3px solid #fff;
+
+  border-radius: 14px;
+
   font-weight: 900;
-  padding: 8px 18px;
-  border-radius: 12px;
-  box-shadow: 0 5px 0 #a76515;
+
+  box-shadow:
+    0 5px 0 #c67d19;
 }
 
 .start-card h1 {
-  font-size: clamp(32px, 6vw, 58px);
-  margin: 20px 0 4px;
+  margin: 18px 0 3px;
+
+  font-size:
+    clamp(32px, 6vw, 58px);
+
+  line-height: 1.05;
+
+  color: #24734c;
+
+  text-shadow:
+    2px 2px 0 #fff,
+    3px 3px 0 #9ee1aa;
 }
 
 .meaning {
-  margin: 0;
-  color: #b9f4ec;
-  font-weight: 700;
+  margin: 8px 0 0;
+
+  color: #37747c;
+
+  font-weight: 900;
 }
 
 .tagline {
-  color: #ffd965;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  margin: 12px 0 26px;
+  margin: 10px 0 23px;
+
+  color: #e18518;
+
+  font-weight: 900;
+
+  letter-spacing: 0.4px;
+}
+
+.name-box {
+  padding: 18px;
+
+  border:
+    3px solid #75c89c;
+
+  border-radius: 20px;
+
+  background:
+    rgba(224, 255, 232, 0.72);
 }
 
 .start-card label {
   display: block;
+
+  margin-bottom: 9px;
+
   text-align: left;
-  font-weight: 800;
-  margin-bottom: 8px;
+
+  color: #275c4b;
+
+  font-weight: 900;
 }
 
 .start-card input {
   width: 100%;
-  border: 3px solid #6cbab6;
-  border-radius: 12px;
+
   padding: 14px 16px;
+
+  border:
+    3px solid #66b98c;
+
+  border-radius: 13px;
+
   background: #fff;
-  color: #17242a;
+
+  color: #17383e;
+
   outline: none;
 }
 
 .start-card input:focus {
-  border-color: #ffd34e;
+  border-color: #ffbc2e;
+
+  box-shadow:
+    0 0 0 4px #ffe8a3;
+}
+
+.start-card input::placeholder {
+  color: #82989b;
 }
 
 .error {
   min-height: 22px;
-  color: #ffcf6a;
-  font-weight: 700;
+
+  margin: 7px 0;
+
+  color: #c33f3f;
+
+  font-weight: 900;
 }
 
 
@@ -124,18 +288,42 @@ button {
 
 .primary-btn {
   border: 0;
-  border-radius: 13px;
+
+  border-radius: 14px;
+
   padding: 14px 22px;
-  background: #ffd348;
-  color: #2a2100;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffe36b,
+      #ffc52f
+    );
+
+  color: #493200;
+
   font-weight: 900;
+
   cursor: pointer;
-  box-shadow: 0 5px 0 #a76a14;
+
+  box-shadow:
+    0 5px 0 #b97616;
+
+  transition:
+    transform 0.12s,
+    filter 0.12s;
+}
+
+.primary-btn:hover {
+  filter: brightness(1.04);
 }
 
 .primary-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 #a76a14;
+  transform:
+    translateY(3px);
+
+  box-shadow:
+    0 2px 0 #b97616;
 }
 
 .primary-btn:disabled {
@@ -151,115 +339,168 @@ button {
 .prep-screen {
   display: grid;
   place-items: center;
+
   padding: 18px;
+
   overflow-y: auto;
 
   background:
     radial-gradient(
-      circle at 50% 25%,
-      #246c62,
-      #071923 72%
+      circle at 50% 15%,
+      #fff8b4 0%,
+      #b4efff 30%,
+      #65cfe8 60%,
+      #52bd72 100%
     );
 }
 
 .prep-card {
-  width: min(650px, 95vw);
+  width:
+    min(680px, 95vw);
+
   max-height: 94vh;
+
   overflow-y: auto;
-
-  background: rgba(6, 35, 51, 0.96);
-
-  border: 4px solid #8fd6d0;
-  border-radius: 24px;
 
   padding: 28px;
 
   text-align: center;
 
+  color: #20434b;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #fff9df
+    );
+
+  border:
+    5px solid #fff;
+
+  border-radius: 26px;
+
   box-shadow:
-    0 18px 60px #0008;
+    0 9px 0 #2f9a61,
+    0 22px 55px #174d5350;
 }
 
 .prep-icon {
-  font-size: 58px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+
+  font-size: 55px;
 }
 
 .prep-card h2 {
-  margin: 5px 0 12px;
-  font-size: clamp(25px, 5vw, 38px);
-  color: #ffd965;
-}
+  margin: 4px 0 18px;
 
-.prep-intro {
-  font-weight: 800;
-  color: #d7fbf7;
-  margin-bottom: 18px;
+  font-size:
+    clamp(25px, 5vw, 38px);
+
+  line-height: 1.15;
+
+  color: #24734c;
 }
 
 .prep-list {
-  text-align: left;
-
-  background: rgba(255, 255, 255, 0.08);
-
-  border: 2px solid #6cbab6;
-  border-radius: 16px;
+  margin: 14px 0 18px;
 
   padding: 10px 18px;
 
-  margin: 16px 0;
+  text-align: left;
+
+  background: #e9fbea;
+
+  border:
+    3px solid #8bcf9c;
+
+  border-radius: 18px;
 }
 
 .prep-list p {
   margin: 12px 0;
-  line-height: 1.45;
+
   font-size: 16px;
+
+  line-height: 1.5;
+}
+
+.prep-list strong {
+  color: #176a47;
 }
 
 .mic-test-box {
-  margin-top: 20px;
+  margin-top: 18px;
 
-  padding: 18px;
+  padding: 19px;
 
-  background: #f7f1dc;
-  color: #18303b;
+  color: #183d4a;
 
-  border: 4px solid #7a4c24;
-  border-radius: 18px;
+  background: #eefaff;
+
+  border:
+    4px solid #67b9d5;
+
+  border-radius: 19px;
 }
 
 .mic-test-box h3 {
-  margin: 0 0 8px;
+  margin: 0 0 9px;
+
   font-size: 23px;
+
+  color: #23647b;
 }
 
-.mic-test-box p {
-  margin: 7px 0 14px;
+.test-instruction {
+  margin: 7px 0 15px;
+
+  font-size: 17px;
+}
+
+.test-instruction strong {
+  color: #b7444d;
 }
 
 .test-mic-btn {
   border: 0;
-  border-radius: 13px;
 
-  padding: 13px 18px;
+  border-radius: 14px;
 
-  background: #d84b52;
+  padding: 13px 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f56d76,
+      #d94751
+    );
+
   color: #fff;
 
   font-weight: 900;
+
   cursor: pointer;
+
+  box-shadow:
+    0 5px 0 #992d35;
 }
 
 .test-mic-btn:active {
-  transform: scale(0.97);
+  transform:
+    translateY(3px);
+
+  box-shadow:
+    0 2px 0 #992d35;
 }
 
 .mic-test-status {
-  min-height: 26px;
+  min-height: 27px;
 
-  margin: 14px 0 6px;
+  margin: 14px 0 5px;
 
   font-weight: 900;
+
   line-height: 1.4;
 }
 
@@ -272,7 +513,7 @@ button {
 }
 
 .mic-test-status.listening {
-  color: #2c7391;
+  color: #23738f;
 }
 
 .prep-ready {
@@ -287,22 +528,30 @@ button {
 .game-screen,
 #worldViewport {
   position: relative;
+
   width: 100%;
   height: 100%;
+
   overflow: hidden;
+
   background: #102a32;
 }
 
 #world {
   position: absolute;
+
   left: 0;
   top: 0;
-  transform-origin: top left;
+
+  transform-origin:
+    top left;
+
   will-change: transform;
 }
 
 #worldMap {
   position: absolute;
+
   inset: 0;
 
   width: 1600px;
@@ -311,6 +560,7 @@ button {
   display: block;
 
   user-select: none;
+
   -webkit-user-drag: none;
 
   image-rendering: auto;
@@ -329,7 +579,8 @@ button {
 
   z-index: 30;
 
-  transform: translate(-50%, -76%);
+  transform:
+    translate(-50%, -76%);
 
   pointer-events: none;
 }
@@ -340,7 +591,8 @@ button {
   left: 50%;
   bottom: 0;
 
-  transform: translateX(-50%);
+  transform:
+    translateX(-50%);
 
   width: 58px;
   height: 70px;
@@ -348,7 +600,9 @@ button {
   object-fit: contain;
 
   filter:
-    drop-shadow(0 4px 2px #0006);
+    drop-shadow(
+      0 4px 2px #0006
+    );
 }
 
 #playerName {
@@ -357,18 +611,22 @@ button {
   bottom: 70px;
   left: 50%;
 
-  transform: translateX(-50%);
+  transform:
+    translateX(-50%);
 
   white-space: nowrap;
 
-  background: #152631e8;
-
-  border: 2px solid #fff7;
-  border-radius: 8px;
-
   padding: 3px 8px;
 
+  background: #152631e8;
+
+  border:
+    2px solid #fff7;
+
+  border-radius: 8px;
+
   font-size: 12px;
+
   font-weight: 900;
 }
 
@@ -383,19 +641,23 @@ button {
   width: 105px;
   height: 110px;
 
-  transform: translate(-50%, -85%);
+  transform:
+    translate(-50%, -85%);
 
   z-index: 20;
 
   transition: 0.2s;
 
   filter:
-    drop-shadow(0 5px 4px #0006);
+    drop-shadow(
+      0 5px 4px #0006
+    );
 }
 
 .checkpoint img {
   width: 100%;
   height: 100%;
+
   object-fit: contain;
 }
 
@@ -406,11 +668,12 @@ button {
 
 .checkpoint.completed {
   filter:
-    drop-shadow(0 0 8px #ffe26d);
+    drop-shadow(
+      0 0 8px #ffe26d
+    );
 }
 
 @keyframes pulse {
-
   50% {
     transform:
       translate(-50%, -85%)
@@ -436,7 +699,8 @@ button {
   left: 50%;
   top: 10px;
 
-  transform: translateX(-50%);
+  transform:
+    translateX(-50%);
 
   width:
     min(
@@ -449,13 +713,17 @@ button {
   display: flex;
 
   align-items: center;
-  justify-content: space-between;
+
+  justify-content:
+    space-between;
 
   padding: 6px 18px;
 
   background: #09283def;
 
-  border: 3px solid #6ba6b5;
+  border:
+    3px solid #6ba6b5;
+
   border-radius: 14px;
 
   box-shadow:
@@ -464,24 +732,30 @@ button {
 
 .hud-player {
   display: flex;
+
   align-items: center;
+
   gap: 8px;
 }
 
 .hud-player img {
   width: 38px;
   height: 42px;
+
   object-fit: contain;
 }
 
 .hud-player div {
   display: flex;
+
   flex-direction: column;
 }
 
 .hud-player span {
   font-size: 11px;
+
   color: #91afbd;
+
   font-weight: 900;
 }
 
@@ -492,6 +766,7 @@ button {
 .hud-score,
 .hud-progress {
   font-size: 24px;
+
   font-weight: 900;
 }
 
@@ -508,16 +783,20 @@ button {
   left: 14px;
   bottom: 14px;
 
-  background: #09283def;
-
-  border: 3px solid #d8f4f8;
-  border-radius: 13px;
-
   padding: 10px 14px;
 
   display: flex;
+
   flex-direction: column;
+
   gap: 5px;
+
+  background: #09283def;
+
+  border:
+    3px solid #d8f4f8;
+
+  border-radius: 13px;
 
   font-size: 13px;
 }
@@ -535,16 +814,20 @@ button {
   left: 50%;
   bottom: 112px;
 
-  transform: translateX(-50%);
-
-  background: #09283df2;
-
-  border: 3px solid #fff;
-  border-radius: 14px;
+  transform:
+    translateX(-50%);
 
   padding: 10px 18px;
 
+  background: #09283df2;
+
+  border:
+    3px solid #fff;
+
+  border-radius: 14px;
+
   font-weight: 900;
+
   text-align: center;
 
   box-shadow:
@@ -564,14 +847,17 @@ button {
   left: 50%;
   bottom: 78px;
 
-  transform: translateX(-50%);
-
-  border: 0;
-  border-radius: 15px;
+  transform:
+    translateX(-50%);
 
   padding: 13px 18px;
 
+  border: 0;
+
+  border-radius: 15px;
+
   background: #ffd348;
+
   color: #2a2100;
 
   font-weight: 900;
@@ -605,16 +891,21 @@ button {
   width: 50px;
   height: 50px;
 
-  border: 2px solid #9cc8d5;
+  border:
+    2px solid #9cc8d5;
+
   border-radius: 12px;
 
   background: #09283de8;
+
   color: #fff;
 
   font-size: 23px;
+
   font-weight: 900;
 
   touch-action: none;
+
   user-select: none;
 }
 
@@ -641,7 +932,9 @@ button {
 #dpad button:active,
 #dpad button.pressed {
   background: #245c77;
-  transform: scale(0.94);
+
+  transform:
+    scale(0.94);
 }
 
 
@@ -657,39 +950,49 @@ button {
   inset: 0;
 
   display: grid;
+
   place-items: center;
 
-  background: #021018bd;
-
   padding: 20px;
+
+  background: #021018bd;
 }
 
 .modal-card {
   position: relative;
 
-  width: min(500px, 94vw);
-
-  background: #f7f1dc;
-  color: #18303b;
-
-  border: 5px solid #7a4c24;
-  border-radius: 20px;
+  width:
+    min(500px, 94vw);
 
   padding: 30px;
 
   text-align: center;
+
+  background: #f7f1dc;
+
+  color: #18303b;
+
+  border:
+    5px solid #7a4c24;
+
+  border-radius: 20px;
 
   box-shadow:
     0 20px 80px #000b;
 }
 
 .modal-icon {
-  font-size: 50px;
+  font-size: 38px;
+
+  line-height: 1;
+
+  margin-bottom: 0;
 }
 
 .modal-card h2 {
-  font-size: 32px;
-  margin: 8px;
+  margin: 3px 8px 5px;
+
+  font-size: 25px;
 }
 
 .modal-card p {
@@ -711,13 +1014,14 @@ button {
   top: 8px;
 
   border: 0;
+
   background: none;
+
+  color: #58371d;
 
   font-size: 34px;
 
   cursor: pointer;
-
-  color: #58371d;
 }
 
 
@@ -726,15 +1030,80 @@ button {
 ===================================================== */
 
 .activity-card {
-  width: min(680px, 95vw);
+  width:
+    min(680px, 95vw);
 
   max-height: 90vh;
 
   overflow: auto;
 }
 
+
+/* Misi kecil di bahagian atas */
+
+.activity-mission {
+  margin:
+    0 auto 4px;
+
+  color: #8c6a3e;
+
+  font-size: 14px;
+
+  font-weight: 900;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+
+/* SOALAN menjadi fokus utama */
+
+.activity-question {
+  display: inline-block;
+
+  margin:
+    2px auto 13px;
+
+  padding: 7px 18px;
+
+  color: #fff;
+
+  background: #2c7391;
+
+  border-radius: 999px;
+
+  font-size:
+    clamp(20px, 4vw, 27px);
+
+  font-weight: 900;
+
+  box-shadow:
+    0 4px 0 #19516a;
+}
+
+
+/* Tajuk aktiviti di bawah */
+
+.activity-title {
+  margin:
+    15px auto 4px;
+
+  padding-top: 11px;
+
+  border-top:
+    2px dashed #d5bd98;
+
+  color: #6c4b22;
+
+  font-size: 16px;
+
+  font-weight: 900;
+}
+
 .activity-head {
   font-weight: 900;
+
   color: #6c4b22;
 
   margin: 4px 0 14px;
@@ -761,6 +1130,7 @@ button {
 .record-btn,
 .next-btn {
   border: 0;
+
   border-radius: 13px;
 
   padding: 13px 18px;
@@ -772,11 +1142,13 @@ button {
 
 .audio-btn {
   background: #2c7391;
+
   color: #fff;
 }
 
 .record-btn {
   background: #d84b52;
+
   color: #fff;
 }
 
@@ -789,6 +1161,7 @@ button {
 
 .next-btn {
   background: #ffd348;
+
   color: #2a2100;
 }
 
@@ -802,17 +1175,19 @@ button {
 
   text-align: center;
 
-  padding: 6px 4px 10px;
+  padding:
+    2px 4px 10px;
 }
 
 .instruction-icon {
-  font-size: 58px;
+  margin-bottom: 4px;
 
-  margin-bottom: 8px;
+  font-size: 48px;
 }
 
 .instruction-screen h3 {
-  margin: 4px 0 14px;
+  margin:
+    3px 0 14px;
 
   color: #6c4b22;
 
@@ -822,15 +1197,22 @@ button {
 .instruction-screen p {
   max-width: 540px;
 
-  margin: 0 auto 20px;
+  margin:
+    0 auto 20px;
+
+  color: #263d46;
 
   font-size: 18px;
 
   line-height: 1.55;
 
   font-weight: 700;
+}
 
-  color: #263d46;
+.instruction-screen p strong {
+  color: #176a62;
+
+  font-weight: 900;
 }
 
 
@@ -852,20 +1234,23 @@ button {
 }
 
 .picture-option {
-  font-size: 64px;
-
   min-height: 115px;
 
-  border: 4px solid #b98a51;
-  background: #fffaf0;
+  border:
+    4px solid #b98a51;
 
   border-radius: 18px;
+
+  background: #fffaf0;
+
+  font-size: 64px;
 
   cursor: pointer;
 }
 
 .picture-option:active {
-  transform: scale(0.96);
+  transform:
+    scale(0.96);
 }
 
 
@@ -876,11 +1261,11 @@ button {
 .feedback {
   min-height: 34px;
 
+  margin: 12px 0;
+
   font-size: 18px;
 
   font-weight: 900;
-
-  margin: 12px 0;
 }
 
 .feedback.good {
@@ -913,11 +1298,6 @@ button {
 .drop-zone {
   min-height: 170px;
 
-  border: 4px dashed #b98a51;
-  border-radius: 18px;
-
-  background: #fffaf0;
-
   padding: 14px;
 
   display: flex;
@@ -925,20 +1305,30 @@ button {
   gap: 10px;
 
   align-items: center;
+
   justify-content: center;
 
   flex-wrap: wrap;
+
+  border:
+    4px dashed #b98a51;
+
+  border-radius: 18px;
+
+  background: #fffaf0;
 }
 
 .drag-item {
-  font-size: 52px;
+  padding: 8px;
 
   background: #fff;
 
-  border: 2px solid #d5bd98;
+  border:
+    2px solid #d5bd98;
+
   border-radius: 14px;
 
-  padding: 8px;
+  font-size: 52px;
 
   cursor: grab;
 
@@ -952,7 +1342,8 @@ button {
 
   background: #dff5ff;
 
-  transform: scale(1.08);
+  transform:
+    scale(1.08);
 
   box-shadow:
     0 0 0 4px #87cbe5;
@@ -972,12 +1363,14 @@ button {
 
   padding: 14px;
 
+  border:
+    3px solid #91aeb7;
+
   border-radius: 14px;
 
   background: #fff;
-  color: #17303b;
 
-  border: 3px solid #91aeb7;
+  color: #17303b;
 
   font-weight: 800;
 
@@ -989,11 +1382,11 @@ button {
 .status-line {
   min-height: 24px;
 
-  font-weight: 900;
+  margin-top: 8px;
 
   color: #7c3034;
 
-  margin-top: 8px;
+  font-weight: 900;
 }
 
 
@@ -1002,13 +1395,18 @@ button {
 ===================================================== */
 
 .mic-indicator {
-  width: min(420px, 100%);
+  width:
+    min(420px, 100%);
 
-  margin: 10px auto;
+  margin:
+    10px auto;
 
-  padding: 10px 14px;
+  padding:
+    10px 14px;
 
-  border: 2px solid #91aeb7;
+  border:
+    2px solid #91aeb7;
+
   border-radius: 12px;
 
   background: #edf6f8;
@@ -1037,11 +1435,12 @@ button {
 ===================================================== */
 
 .goods {
+  margin:
+    12px 0;
+
   font-size: 48px;
 
   letter-spacing: 12px;
-
-  margin: 12px 0;
 }
 
 
@@ -1050,7 +1449,8 @@ button {
 ===================================================== */
 
 .result-card {
-  width: min(560px, 94vw);
+  width:
+    min(560px, 94vw);
 }
 
 .trophy {
@@ -1058,17 +1458,17 @@ button {
 }
 
 .result-score {
+  color: #8a5c00;
+
   font-size: 28px;
 
   font-weight: 900;
-
-  color: #8a5c00;
 }
 
 .result-cheer {
-  font-weight: 900;
-
   color: #18784b;
+
+  font-weight: 900;
 }
 
 
@@ -1099,14 +1499,20 @@ button {
 
   .checkpoint {
     width: 90px;
+
     height: 96px;
   }
 
   #dpad {
-    transform: scale(0.86);
+    transform:
+      scale(0.86);
 
     transform-origin:
       right bottom;
+  }
+
+  .start-decor-1 {
+    left: -4%;
   }
 }
 
@@ -1117,24 +1523,38 @@ button {
 
 @media (max-width: 560px) {
 
+  .start-card {
+    padding:
+      26px 18px;
+  }
+
+  .name-box {
+    padding:
+      15px 13px;
+  }
+
   .picture-option {
     font-size: 50px;
   }
 
   .kitchen {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
   .activity-card {
-    padding: 24px 16px;
+    padding:
+      24px 16px;
   }
 
   .prep-card {
-    padding: 22px 16px;
+    padding:
+      22px 16px;
   }
 
   .prep-list {
-    padding: 8px 12px;
+    padding:
+      8px 12px;
   }
 
   .prep-list p {
@@ -1143,6 +1563,10 @@ button {
 
   .instruction-screen p {
     font-size: 16px;
+  }
+
+  .activity-question {
+    font-size: 20px;
   }
 }
 
@@ -1201,13 +1625,15 @@ and (max-width: 700px) {
 
     height: 50px;
 
-    padding: 4px 8px;
+    padding:
+      4px 8px;
 
     border-width: 2px;
   }
 
   .hud-player img {
     width: 31px;
+
     height: 35px;
   }
 
@@ -1222,6 +1648,7 @@ and (max-width: 700px) {
 
   #dpad {
     right: 10px;
+
     bottom: 12px;
 
     transform:
@@ -1233,11 +1660,13 @@ and (max-width: 700px) {
 
   .interact-btn {
     left: 14px;
+
     bottom: 28px;
 
     transform: none;
 
-    padding: 12px 14px;
+    padding:
+      12px 14px;
 
     font-size: 13px;
   }
@@ -1245,23 +1674,27 @@ and (max-width: 700px) {
   .interaction {
     bottom: 145px;
 
-    font-size: 12px;
+    padding:
+      8px 12px;
 
-    padding: 8px 12px;
+    font-size: 12px;
   }
 
   .checkpoint {
     width: 82px;
+
     height: 88px;
   }
 
   #player {
     width: 52px;
+
     height: 70px;
   }
 
   #playerSprite {
     width: 52px;
+
     height: 64px;
   }
 
@@ -1282,17 +1715,40 @@ and (max-width: 700px) {
 
     max-height: 92dvh;
 
-    padding: 22px 13px;
+    padding:
+      22px 13px;
 
     border-width: 4px;
   }
 
   .modal-icon {
-    font-size: 35px;
+    font-size: 29px;
   }
 
   .modal-card h2 {
-    font-size: 24px;
+    font-size: 21px;
+
+    margin:
+      2px 5px 4px;
+  }
+
+  .activity-mission {
+    font-size: 12px;
+  }
+
+  .activity-question {
+    margin-bottom: 9px;
+
+    padding:
+      6px 15px;
+
+    font-size: 19px;
+  }
+
+  .activity-title {
+    margin-top: 10px;
+
+    font-size: 14px;
   }
 
   .picture-options {
@@ -1319,7 +1775,7 @@ and (max-width: 700px) {
   }
 
   .instruction-icon {
-    font-size: 44px;
+    font-size: 40px;
   }
 
   .instruction-screen h3 {
@@ -1356,11 +1812,13 @@ and (max-height: 600px) {
         calc(100% - 170px)
       );
 
-    padding: 3px 10px;
+    padding:
+      3px 10px;
   }
 
   .hud-player img {
     width: 28px;
+
     height: 32px;
   }
 
@@ -1375,6 +1833,7 @@ and (max-height: 600px) {
 
   #dpad {
     right: 10px;
+
     bottom: 8px;
 
     transform:
@@ -1386,21 +1845,24 @@ and (max-height: 600px) {
 
   .interact-btn {
     left: 12px;
+
     bottom: 14px;
 
     transform: none;
 
-    font-size: 12px;
+    padding:
+      10px 12px;
 
-    padding: 10px 12px;
+    font-size: 12px;
   }
 
   .interaction {
     bottom: 70px;
 
-    font-size: 12px;
+    padding:
+      7px 11px;
 
-    padding: 7px 11px;
+    font-size: 12px;
   }
 
   .modal {
@@ -1410,25 +1872,49 @@ and (max-height: 600px) {
   .modal-card {
     max-height: 96dvh;
 
-    padding: 15px 18px;
+    padding:
+      12px 18px;
   }
 
   .modal-icon {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .modal-card h2 {
-    font-size: 22px;
+    margin: 1px 3px 3px;
 
-    margin: 3px;
+    font-size: 19px;
   }
 
-  .activity-head {
-    margin-bottom: 7px;
+  .activity-mission {
+    margin-bottom: 2px;
+
+    font-size: 11px;
+  }
+
+  .activity-question {
+    margin-bottom: 6px;
+
+    padding:
+      4px 14px;
+
+    font-size: 17px;
+
+    box-shadow:
+      0 3px 0 #19516a;
+  }
+
+  .activity-title {
+    margin-top: 7px;
+
+    padding-top: 7px;
+
+    font-size: 13px;
   }
 
   .activity-actions {
-    margin: 8px 0;
+    margin:
+      8px 0;
   }
 
   .picture-option {
@@ -1438,7 +1924,8 @@ and (max-height: 600px) {
   }
 
   .kitchen {
-    margin: 8px 0;
+    margin:
+      8px 0;
   }
 
   .drag-zone,
@@ -1461,35 +1948,39 @@ and (max-height: 600px) {
   }
 
   .feedback {
-    margin: 6px 0;
-
     min-height: 26px;
+
+    margin:
+      6px 0;
   }
 
   .instruction-icon {
-    font-size: 34px;
-
     margin-bottom: 2px;
+
+    font-size: 31px;
   }
 
   .instruction-screen h3 {
-    font-size: 20px;
+    margin:
+      2px 0 8px;
 
-    margin: 2px 0 8px;
+    font-size: 20px;
   }
 
   .instruction-screen p {
+    margin-bottom: 10px;
+
     font-size: 14px;
 
     line-height: 1.35;
-
-    margin-bottom: 10px;
   }
 
   .mic-indicator {
-    margin: 5px auto;
+    margin:
+      5px auto;
 
-    padding: 7px 10px;
+    padding:
+      7px 10px;
 
     font-size: 13px;
   }
@@ -1499,62 +1990,103 @@ and (max-height: 600px) {
   }
 
   .prep-card {
-    width: min(720px, 96vw);
+    width:
+      min(720px, 96vw);
 
     max-height: 96dvh;
 
-    padding: 14px 20px;
+    padding:
+      12px 20px;
   }
 
   .prep-icon {
-    font-size: 34px;
+    font-size: 31px;
   }
 
   .prep-card h2 {
-    font-size: 23px;
+    margin:
+      1px 0 5px;
 
-    margin: 2px 0 5px;
-  }
-
-  .prep-intro {
-    margin: 4px 0 8px;
+    font-size: 21px;
   }
 
   .prep-list {
-    margin: 7px 0;
+    margin:
+      6px 0;
 
-    padding: 4px 12px;
+    padding:
+      3px 12px;
   }
 
   .prep-list p {
-    margin: 7px 0;
+    margin:
+      6px 0;
 
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .mic-test-box {
-    margin-top: 8px;
+    margin-top: 7px;
 
-    padding: 10px;
+    padding: 9px;
   }
 
   .mic-test-box h3 {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .mic-test-box p {
-    margin: 4px 0 8px;
+    margin:
+      3px 0 7px;
 
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .mic-test-status {
-    margin: 7px 0 2px;
+    margin:
+      6px 0 2px;
 
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .prep-ready {
-    margin-top: 8px;
+    margin-top: 7px;
+  }
+
+  .start-card {
+    width:
+      min(600px, 90vw);
+
+    padding:
+      16px 25px;
+  }
+
+  .start-card h1 {
+    margin-top: 10px;
+
+    font-size:
+      clamp(28px, 7vh, 42px);
+  }
+
+  .tagline {
+    margin:
+      5px 0 10px;
+  }
+
+  .name-box {
+    padding:
+      10px 15px;
+  }
+
+  .start-card input {
+    padding:
+      9px 13px;
+  }
+
+  .error {
+    min-height: 17px;
+
+    margin:
+      3px 0;
   }
 }
