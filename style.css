@@ -2105,19 +2105,16 @@ and (max-height: 600px) {
 
 /* SOALAN 1 — krim / putih lembut */
 .question-page.question-1 {
-  background: #fffdf3;
+  background-color: #E889B3;
 }
 
-/* SOALAN 2 — biru muda */
 .question-page.question-2 {
-  background: #eaf6ff;
+  background-color: #79A6DC;
 }
 
-/* SOALAN 3 — kuning muda */
 .question-page.question-3 {
-  background: #fff6cf;
+  background-color: #EBCF68;
 }
-
 
 /* =====================================================
    LABEL MISI
