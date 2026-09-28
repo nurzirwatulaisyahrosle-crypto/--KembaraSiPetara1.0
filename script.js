@@ -824,7 +824,7 @@ function shell(title, total, body) {
 
 function renderActivity(id) {
   stopSpeech();
-  stopRecognition(true);
+  
 
   const d =
     CP[id][activityIndex];
