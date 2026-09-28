@@ -2244,3 +2244,24 @@ and (max-height: 600px) {
 .question-page {
   background: white !important;
 }
+/* =========================================
+   WARNA BACKGROUND LUAR MENGIKUT SOALAN
+========================================= */
+
+#activityArea.outer-question-1 {
+  background-color: #E889B3 !important;
+}
+
+#activityArea.outer-question-2 {
+  background-color: #79A6DC !important;
+}
+
+#activityArea.outer-question-3 {
+  background-color: #EBCF68 !important;
+}
+
+/* Kotak aktiviti dalam kekal putih */
+#activityArea .question-page {
+  background: #ffffff !important;
+}
+
