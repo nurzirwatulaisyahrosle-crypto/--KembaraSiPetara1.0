@@ -1178,7 +1178,23 @@ function renderVoice(
 // SPEECH RECOGNITION
 // =====================================================
 
+// =====================================================
+// SPEECH RECOGNITION - STABLE VERSION
+// CP3, CP4 & CP5
+// =====================================================
+
+let stopRequested = false;
+let currentVoiceData = null;
+let currentRepeatMode = false;
+let recognitionStarting = false;
+
+
+// =====================================================
+// CREATE A COMPLETELY NEW RECOGNITION SESSION
+// =====================================================
+
 function newRec() {
+
   const SR =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
@@ -1189,250 +1205,614 @@ function newRec() {
 
   r.lang = "ms-MY";
 
-  // continuous membantu murid yang berhenti
-  // sekejap ketika bercakap.
+  // PENTING:
+  // Kita guna satu sesi rakaman yang bersih.
+  // Jangan auto-restart recognition lama.
   r.continuous = true;
   r.interimResults = true;
   r.maxAlternatives = 3;
 
+
+  // ---------------------------------------------------
+  // MICROPHONE REALLY STARTED
+  // ---------------------------------------------------
+
   r.onstart = () => {
+
+    recognitionStarting = false;
+
     const indicator =
-      document.querySelector(
-        "#micIndicator"
-      );
+      document.querySelector("#micIndicator");
+
+    const status =
+      document.querySelector("#recordStatus");
 
     if (indicator) {
       indicator.textContent =
         "🟢 Mikrofon sedang mendengar...";
+
       indicator.classList.add("active");
+    }
+
+    if (status) {
+      status.textContent =
+        "🎙️ Sedang mendengar... Bercakap sekarang.";
     }
   };
 
+
+  // ---------------------------------------------------
+  // SPEECH DETECTED
+  // ---------------------------------------------------
+
   r.onspeechstart = () => {
+
     const indicator =
-      document.querySelector(
-        "#micIndicator"
-      );
+      document.querySelector("#micIndicator");
 
     if (indicator) {
       indicator.textContent =
         "🗣️ Suara dikesan!";
+
       indicator.classList.add("active");
     }
   };
 
+
+  // ---------------------------------------------------
+  // SPEECH ENDED
+  // ---------------------------------------------------
+
   r.onspeechend = () => {
+
     const indicator =
-      document.querySelector(
-        "#micIndicator"
-      );
+      document.querySelector("#micIndicator");
 
     if (
       indicator &&
       isRecording
     ) {
       indicator.textContent =
-        "🎤 Teruskan bercakap atau tekan BERHENTI RAKAM.";
+        "🎤 Mikrofon masih aktif. Teruskan bercakap atau tekan BERHENTI RAKAM.";
     }
   };
 
+
+  // ---------------------------------------------------
+  // GET TRANSCRIPT
+  // ---------------------------------------------------
+
   r.onresult = event => {
-    let interim = "";
+
+    let newInterim = "";
 
     for (
       let i = event.resultIndex;
       i < event.results.length;
       i++
     ) {
-      const transcript =
-        event.results[i][0].transcript;
 
-      if (
-        event.results[i].isFinal
-      ) {
+      const result =
+        event.results[i];
+
+      const text =
+        result[0].transcript;
+
+      if (result.isFinal) {
+
         finalTranscript +=
-          " " + transcript;
-      }
+          " " + text;
 
-      else {
-        interim +=
-          " " + transcript;
+      } else {
+
+        newInterim +=
+          " " + text;
       }
     }
 
     interimTranscript =
-      interim;
+      newInterim;
 
-    const box =
-      document.querySelector(
-        "#transcript"
-      );
+    const transcriptBox =
+      document.querySelector("#transcript");
 
-    if (box) {
-      const shown =
-        (
-          finalTranscript +
-          " " +
-          interimTranscript
-        ).trim();
+    const combined =
+      (
+        finalTranscript +
+        " " +
+        interimTranscript
+      ).trim();
 
-      box.textContent =
-        shown ||
+    if (transcriptBox) {
+
+      transcriptBox.textContent =
+        combined ||
         "🎙️ Sedang mendengar...";
     }
   };
 
-  r.onerror = event => {
-    const indicator =
-      document.querySelector(
-        "#micIndicator"
-      );
 
-    if (
-      event.error === "no-speech"
-    ) {
+  // ---------------------------------------------------
+  // RECOGNITION ERROR
+  // ---------------------------------------------------
+
+  r.onerror = event => {
+
+    console.log(
+      "Speech recognition error:",
+      event.error
+    );
+
+    const indicator =
+      document.querySelector("#micIndicator");
+
+    const status =
+      document.querySelector("#recordStatus");
+
+
+    // No speech bukan jawapan salah.
+    if (event.error === "no-speech") {
+
       if (indicator) {
         indicator.textContent =
-          "🎤 Suara belum dikesan. Cuba bercakap lebih dekat dengan mikrofon.";
+          "🎤 Belum dengar suara. Cuba bercakap sekali lagi.";
+      }
+
+      if (status) {
+        status.textContent =
+          "🎙️ Mikrofon masih menunggu suara...";
       }
 
       return;
     }
 
+
+    // Permission microphone
     if (
       event.error === "not-allowed" ||
-      event.error ===
-        "service-not-allowed"
+      event.error === "service-not-allowed"
     ) {
+
       isRecording = false;
-
-      recBtn();
-
-      fb(
-        "⚠️ Mikrofon belum dibenarkan. Benarkan mikrofon dan cuba lagi.",
-        0
-      );
+      recognitionStarting = false;
 
       if (indicator) {
         indicator.textContent =
           "🔴 Mikrofon tidak dibenarkan.";
       }
 
+      fb(
+        "⚠️ Mikrofon belum dibenarkan. Benarkan penggunaan mikrofon dan cuba lagi.",
+        0
+      );
+
+      updateRecordButton();
+
       return;
     }
 
-    if (indicator) {
-      indicator.textContent =
-        "⚠️ Mikrofon terganggu. Cuba rakam semula.";
+
+    // Audio capture error
+    if (event.error === "audio-capture") {
+
+      isRecording = false;
+      recognitionStarting = false;
+
+      if (indicator) {
+        indicator.textContent =
+          "🔴 Mikrofon tidak dapat digunakan.";
+      }
+
+      fb(
+        "⚠️ Mikrofon tidak dapat digunakan. Cuba rakam semula.",
+        0
+      );
+
+      updateRecordButton();
+
+      return;
+    }
+
+
+    // Other errors
+    if (
+      event.error !== "aborted"
+    ) {
+
+      if (indicator) {
+        indicator.textContent =
+          "⚠️ Rakaman terganggu. Cuba sekali lagi.";
+      }
     }
   };
 
+
+  // ---------------------------------------------------
+  // RECOGNITION SESSION REALLY ENDED
+  // ---------------------------------------------------
+
   r.onend = () => {
-    // Sesetengah browser menutup recognition
-    // sendiri selepas murid berhenti bercakap.
-    // Jika murid belum tekan BERHENTI RAKAM,
-    // cuba sambungkan semula.
-    if (isRecording) {
-      try {
-        r.start();
-      } catch (e) {}
+
+    recognitionStarting = false;
+
+    const wasStopRequested =
+      stopRequested;
+
+    // Jangan restart recognition secara automatik.
+    // Ini yang kita mahu elakkan supaya CP4 / CP5
+    // tidak menggunakan sesi lama.
+    isRecording = false;
+
+    recognition = null;
+
+    updateRecordButton();
+
+
+    const indicator =
+      document.querySelector("#micIndicator");
+
+    if (indicator) {
+      indicator.classList.remove("active");
+    }
+
+
+    // Kalau murid memang tekan BERHENTI RAKAM,
+    // barulah kita nilai jawapan.
+    if (
+      wasStopRequested &&
+      currentVoiceData
+    ) {
+
+      stopRequested = false;
+
+      const dataToCheck =
+        currentVoiceData;
+
+      const repeatToCheck =
+        currentRepeatMode;
+
+      currentVoiceData = null;
+
+      // Beri browser sedikit masa untuk
+      // menyimpan transcript terakhir.
+      setTimeout(() => {
+
+        evalVoice(
+          dataToCheck,
+          repeatToCheck
+        );
+
+      }, 250);
+
+      return;
+    }
+
+
+    // Jika browser menamatkan recognition sendiri
+    // sebelum murid tekan BERHENTI,
+    // jangan terus kata jawapan salah.
+    if (
+      !wasStopRequested
+    ) {
+
+      stopRequested = false;
+
+      if (indicator) {
+
+        const existingText =
+          norm(
+            finalTranscript +
+            " " +
+            interimTranscript
+          );
+
+        if (existingText) {
+
+          indicator.textContent =
+            "🎤 Suara sudah dikesan. Tekan MULA RAKAM jika mahu cuba semula.";
+
+        } else {
+
+          indicator.textContent =
+            "🎤 Rakaman berhenti. Tekan MULA RAKAM dan cuba lagi.";
+        }
+      }
     }
   };
+
 
   return r;
 }
+
 
 // =====================================================
 // START / STOP RECORDING
 // =====================================================
 
 function toggleRec(d, repeat) {
-  if (!isRecording) {
 
-    stopSpeech();
+  // ---------------------------------------------------
+  // START A NEW RECORDING
+  // ---------------------------------------------------
 
-    recognition =
+  if (!isRecording && !recognitionStarting) {
+
+    startFreshRecording(
+      d,
+      repeat
+    );
+
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // STOP RECORDING
+  // ---------------------------------------------------
+
+  if (isRecording) {
+
+    stopRequested = true;
+
+    isRecording = false;
+
+    const status =
+      document.querySelector("#recordStatus");
+
+    const indicator =
+      document.querySelector("#micIndicator");
+
+    if (status) {
+      status.textContent =
+        "⏳ Memproses suara...";
+    }
+
+    if (indicator) {
+      indicator.textContent =
+        "⏳ Sedang menyemak rakaman...";
+    }
+
+    updateRecordButton();
+
+
+    if (recognition) {
+
+      try {
+
+        // STOP, bukan abort.
+        // Stop membenarkan browser menghantar
+        // transcript terakhir sebelum onend.
+        recognition.stop();
+
+      } catch (error) {
+
+        console.log(
+          "Recognition stop error:",
+          error
+        );
+
+        recognition = null;
+
+        setTimeout(() => {
+
+          evalVoice(
+            currentVoiceData,
+            currentRepeatMode
+          );
+
+          currentVoiceData = null;
+          stopRequested = false;
+
+        }, 300);
+      }
+
+    } else {
+
+      setTimeout(() => {
+
+        evalVoice(
+          currentVoiceData,
+          currentRepeatMode
+        );
+
+        currentVoiceData = null;
+        stopRequested = false;
+
+      }, 300);
+    }
+  }
+}
+
+
+// =====================================================
+// START A COMPLETELY FRESH RECORDING
+// =====================================================
+
+function startFreshRecording(
+  d,
+  repeat
+) {
+
+  // Simpan soalan yang sedang dijawab.
+  currentVoiceData = d;
+  currentRepeatMode = repeat;
+
+  stopRequested = false;
+
+
+  // ---------------------------------------------------
+  // 1. STOP AUDIO COMPLETELY
+  // ---------------------------------------------------
+
+  stopSpeech();
+
+
+  // ---------------------------------------------------
+  // 2. DESTROY OLD RECOGNITION SESSION
+  // ---------------------------------------------------
+
+  if (recognition) {
+
+    recognition.onend = null;
+    recognition.onerror = null;
+    recognition.onresult = null;
+
+    try {
+      recognition.abort();
+    } catch (error) {}
+
+    recognition = null;
+  }
+
+
+  // ---------------------------------------------------
+  // 3. CLEAR OLD TRANSCRIPT
+  // ---------------------------------------------------
+
+  finalTranscript = "";
+  interimTranscript = "";
+
+
+  const transcriptBox =
+    document.querySelector("#transcript");
+
+  const indicator =
+    document.querySelector("#micIndicator");
+
+  const status =
+    document.querySelector("#recordStatus");
+
+
+  if (transcriptBox) {
+    transcriptBox.textContent =
+      "⏳ Membuka mikrofon...";
+  }
+
+  if (indicator) {
+    indicator.textContent =
+      "⏳ Menyediakan mikrofon...";
+
+    indicator.classList.remove("active");
+  }
+
+  if (status) {
+    status.textContent =
+      "⏳ Sila tunggu...";
+  }
+
+
+  recognitionStarting = true;
+
+  updateRecordButton();
+
+
+  // ---------------------------------------------------
+  // 4. SMALL DELAY
+  //
+  // Memberi masa kepada audio lama untuk benar-benar
+  // berhenti sebelum SpeechRecognition dibuka.
+  // ---------------------------------------------------
+
+  setTimeout(() => {
+
+    const freshRecognition =
       newRec();
 
-    if (!recognition) {
+
+    if (!freshRecognition) {
+
+      recognitionStarting = false;
+      isRecording = false;
+
+      updateRecordButton();
+
       fb(
         "🎙️ Rakaman suara tidak disokong oleh pelayar ini.",
         0
       );
 
+      if (indicator) {
+        indicator.textContent =
+          "🔴 Rakaman suara tidak disokong.";
+      }
+
       return;
     }
 
-    finalTranscript = "";
-    interimTranscript = "";
+
+    recognition =
+      freshRecognition;
 
     isRecording = true;
 
-    recBtn();
-
-    const transcript =
-      document.querySelector(
-        "#transcript"
-      );
-
-    if (transcript) {
-      transcript.textContent =
-        "🎙️ Sedang mendengar...";
-    }
 
     try {
-      recognition.start();
-    }
 
-    catch (e) {
+      recognition.start();
+
+      updateRecordButton();
+
+    } catch (error) {
+
+      console.log(
+        "Recognition start error:",
+        error
+      );
+
+      recognitionStarting = false;
       isRecording = false;
 
-      recBtn();
+      recognition = null;
+
+      updateRecordButton();
+
+      if (indicator) {
+        indicator.textContent =
+          "⚠️ Mikrofon belum dapat dimulakan.";
+      }
 
       fb(
-        "⚠️ Mikrofon belum dapat dimulakan. Cuba sekali lagi.",
+        "⚠️ Mikrofon belum dapat dimulakan. Tekan MULA RAKAM dan cuba lagi.",
         0
       );
     }
-  }
 
-  else {
-
-    isRecording = false;
-
-    if (recognition) {
-      recognition.onend = null;
-
-      try {
-        recognition.stop();
-      } catch (e) {}
-    }
-
-    recBtn();
-
-    // Beri sedikit masa untuk hasil akhir
-    // recognition masuk sebelum dinilai.
-    setTimeout(
-      () => evalVoice(d, repeat),
-      350
-    );
-  }
+  }, 400);
 }
 
-function recBtn() {
-  const button =
-    document.querySelector(
-      "#recordBtn"
-    );
 
-  const status =
-    document.querySelector(
-      "#recordStatus"
-    );
+// =====================================================
+// UPDATE RECORD BUTTON
+// =====================================================
+
+function updateRecordButton() {
+
+  const button =
+    document.querySelector("#recordBtn");
 
   if (!button) return;
 
+
+  if (recognitionStarting) {
+
+    button.textContent =
+      "⏳ MEMBUKA MIKROFON...";
+
+    button.classList.remove(
+      "recording"
+    );
+
+    button.disabled = true;
+
+    return;
+  }
+
+
+  button.disabled = false;
+
+
   if (isRecording) {
+
     button.textContent =
       "⏹️ BERHENTI RAKAM";
 
@@ -1440,56 +1820,81 @@ function recBtn() {
       "recording"
     );
 
-    if (status) {
-      status.textContent =
-        "🎙️ Sedang mendengar...";
-    }
-  }
+  } else {
 
-  else {
     button.textContent =
       "🎙️ MULA RAKAM";
 
     button.classList.remove(
       "recording"
     );
-
-    if (status) {
-      status.textContent = "";
-    }
   }
 }
 
+
 // =====================================================
-// STOP RECOGNITION
+// OLD recBtn COMPATIBILITY
+// =====================================================
+
+function recBtn() {
+  updateRecordButton();
+}
+
+
+// =====================================================
+// STOP / DESTROY RECOGNITION
 // =====================================================
 
 function stopRecognition(
   clear = false
 ) {
+
+  stopRequested = false;
   isRecording = false;
+  recognitionStarting = false;
+
+  currentVoiceData = null;
+
 
   if (recognition) {
+
+    // Putuskan event lama dahulu supaya
+    // sesi lama tidak hidup semula.
     recognition.onend = null;
+    recognition.onerror = null;
+    recognition.onresult = null;
 
     try {
-      recognition.stop();
-    } catch (e) {}
+      recognition.abort();
+    } catch (error) {}
+
+    recognition = null;
   }
 
-  recognition = null;
 
   if (clear) {
+
     finalTranscript = "";
     interimTranscript = "";
   }
+
+
+  updateRecordButton();
 }
+
 
 // =====================================================
 // EVALUATE VOICE
 // =====================================================
 
-function evalVoice(d, repeat) {
+function evalVoice(
+  d,
+  repeat
+) {
+
+  if (!d) return;
+
+
   const answer =
     norm(
       finalTranscript +
@@ -1497,60 +1902,95 @@ function evalVoice(d, repeat) {
       interimTranscript
     );
 
+
   const transcriptBox =
-    document.querySelector(
-      "#transcript"
-    );
+    document.querySelector("#transcript");
 
   const indicator =
-    document.querySelector(
-      "#micIndicator"
-    );
+    document.querySelector("#micIndicator");
 
-  // PENTING:
-  // Tiada suara dikesan BUKAN jawapan salah.
+
+  // ---------------------------------------------------
+  // NO VOICE DETECTED
+  // ---------------------------------------------------
+
   if (!answer) {
 
     if (transcriptBox) {
+
       transcriptBox.textContent =
-        "🎤 Suara belum dapat dikesan.";
+        "🎤 Tiada suara dikesan.";
     }
 
+
     if (indicator) {
+
       indicator.textContent =
-        "🔄 Cuba rakam semula.";
+        "🔄 Tekan MULA RAKAM dan cuba sekali lagi.";
+
       indicator.classList.remove(
         "active"
       );
     }
 
+
     fb(
-      "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba sekali lagi.",
+      "🎤 Suara belum dapat dikesan. Cuba rakam semula.",
       0
     );
+
 
     return;
   }
 
+
+  // ---------------------------------------------------
+  // SHOW WHAT THE BROWSER HEARD
+  // ---------------------------------------------------
+
+  if (transcriptBox) {
+
+    transcriptBox.textContent =
+      answer;
+  }
+
+
+  if (indicator) {
+
+    indicator.textContent =
+      "✅ Suara berjaya dikesan.";
+
+    indicator.classList.remove(
+      "active"
+    );
+  }
+
+
+  // ---------------------------------------------------
+  // CHECK ANSWER
+  // ---------------------------------------------------
+
   let correct = false;
 
+
   if (d.keywords) {
+
     correct =
       any(
         answer,
         d.keywords
       );
-  }
 
-  else if (d.any) {
+  } else if (d.any) {
+
     correct =
       any(
         answer,
         d.any
       );
-  }
 
-  else if (d.all) {
+  } else if (d.all) {
+
     correct =
       all(
         answer,
@@ -1558,18 +1998,10 @@ function evalVoice(d, repeat) {
       );
   }
 
-  if (transcriptBox) {
-    transcriptBox.textContent =
-      answer;
-  }
 
-  if (indicator) {
-    indicator.textContent =
-      "✅ Suara berjaya dikesan.";
-    indicator.classList.remove(
-      "active"
-    );
-  }
+  // ---------------------------------------------------
+  // CORRECT
+  // ---------------------------------------------------
 
   if (correct) {
 
@@ -1580,28 +2012,38 @@ function evalVoice(d, repeat) {
       1
     );
 
+
     advance();
+
+    return;
   }
 
-  else {
 
-    let message =
-      repeat
-        ? "👂 Ada perkataan yang belum lengkap. Dengar dan cuba sekali lagi."
-        : "🌱 Jawapan belum tepat. Dengar semula dan cuba rakam sekali lagi.";
+  // ---------------------------------------------------
+  // WRONG / INCOMPLETE
+  // ---------------------------------------------------
 
-    if (
-      game.modalCheckpoint === 4 &&
-      activityIndex === 2
-    ) {
-      message =
-        "👂 Hampir betul. Cuba ingat semua barang tadi.";
-    }
+  let message =
+    repeat
+      ? "👂 Ada perkataan yang belum lengkap. Dengar dan cuba sekali lagi."
+      : "🌱 Jawapan belum tepat. Dengar semula dan cuba rakam sekali lagi.";
 
-    fb(message, 0);
+
+  if (
+    game.modalCheckpoint === 4 &&
+    activityIndex === 2
+  ) {
+
+    message =
+      "👂 Hampir betul. Cuba ingat semua barang tadi.";
   }
+
+
+  fb(
+    message,
+    0
+  );
 }
-
 // =====================================================
 // ADVANCE
 // =====================================================
