@@ -781,9 +781,20 @@ function shell(title, total, body) {
   const questionNumber =
     activityIndex + 1;
 
+  // Tukar warna background luar ikut nombor soalan
+  activityArea.classList.remove(
+    "outer-question-1",
+    "outer-question-2",
+    "outer-question-3"
+  );
+
+  activityArea.classList.add(
+    `outer-question-${questionNumber}`
+  );
+
   activityArea.innerHTML = `
 
-    <div class="question-page question-${questionNumber}">
+    <div class="question-page">
 
       <div class="activity-mission">
         🚩 MISI ${missionNumber}
