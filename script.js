@@ -778,29 +778,35 @@ function shell(title, total, body) {
   const missionNumber =
     game.modalCheckpoint || "";
 
+  const questionNumber =
+    activityIndex + 1;
+
   activityArea.innerHTML = `
 
-    <div class="activity-mission">
-      🚩 MISI ${missionNumber}
+    <div class="question-page question-${questionNumber}">
+
+      <div class="activity-mission">
+        🚩 MISI ${missionNumber}
+      </div>
+
+      <div class="activity-question">
+        SOALAN ${questionNumber}
+      </div>
+
+      ${body}
+
+      <div class="activity-title">
+        ${title}
+      </div>
+
+      <div
+        id="feedback"
+        class="feedback"
+      ></div>
+
     </div>
-
-    <div class="activity-question">
-      SOALAN ${activityIndex + 1}
-    </div>
-
-    ${body}
-
-    <div class="activity-title">
-      ${title}
-    </div>
-
-    <div
-      id="feedback"
-      class="feedback"
-    ></div>
   `;
 }
-
 // =====================================================
 // RENDER ACTIVITY
 // =====================================================
