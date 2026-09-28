@@ -1810,39 +1810,32 @@ function startRecognition(
   };
 
 
-  try {
 
- window.setTimeout(() => {
 
-  if (session !== recognitionSession) {
-    return;
-  }
+ try {
 
-  try {
+  r.start();
 
-    r.start();
+}
 
-  }
+catch (error) {
 
-  catch (error) {
+  recognition = null;
 
-    recognition = null;
+  isRecording = false;
 
-    isRecording = false;
+  setRecordButton(false);
 
-    setRecordButton(false);
+  setMicIndicator(
+    false,
+    "🎤 Mikrofon tidak aktif"
+  );
 
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
-
-    setStatus(
-      "⚠️ Rakaman belum dapat dimulakan. Cuba sekali lagi."
-    );
-  }
-
-}, 250);
+  setStatus(
+    "⚠️ Rakaman belum dapat dimulakan. Cuba sekali lagi."
+  );
+}
+}
 
 // =====================================================
 // STOP RECOGNITION
