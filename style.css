@@ -2090,3 +2090,122 @@ and (max-height: 600px) {
       3px 0;
   }
 }
+/* =====================================================
+   KEMAS KINI PAPARAN SOALAN
+===================================================== */
+
+/* Ruang penuh setiap soalan */
+.question-page {
+  width: 100%;
+  border-radius: 20px;
+  padding: 16px 18px 20px;
+  box-sizing: border-box;
+  transition: background 0.3s ease;
+}
+
+/* SOALAN 1 — krim / putih lembut */
+.question-page.question-1 {
+  background: #fffdf3;
+}
+
+/* SOALAN 2 — biru muda */
+.question-page.question-2 {
+  background: #eaf6ff;
+}
+
+/* SOALAN 3 — kuning muda */
+.question-page.question-3 {
+  background: #fff6cf;
+}
+
+
+/* =====================================================
+   LABEL MISI
+===================================================== */
+
+.activity-mission {
+  display: block;
+  width: fit-content;
+
+  margin: 0 0 6px 0;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  text-align: left;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  color: #53606d;
+}
+
+
+/* =====================================================
+   NOMBOR SOALAN
+===================================================== */
+
+.activity-question {
+  display: block;
+
+  width: 100%;
+  margin: 2px 0 15px;
+  padding: 0;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  text-align: center;
+
+  font-size: 23px;
+  font-weight: 900;
+
+  color: #263238;
+}
+
+
+/* =====================================================
+   TAJUK AKTIVITI
+===================================================== */
+
+.activity-title {
+  margin-top: 13px;
+
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #52606d;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .question-page {
+    padding: 12px 12px 16px;
+    border-radius: 16px;
+  }
+
+  .activity-mission {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .activity-question {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .activity-title {
+    font-size: 12px;
+    margin-top: 10px;
+  }
+}
