@@ -781,7 +781,6 @@ function shell(title, total, body) {
   const questionNumber =
     activityIndex + 1;
 
-  // Tukar warna background luar ikut nombor soalan
   activityArea.classList.remove(
     "outer-question-1",
     "outer-question-2",
@@ -818,6 +817,7 @@ function shell(title, total, body) {
     </div>
   `;
 }
+
 // =====================================================
 // RENDER ACTIVITY
 // =====================================================
@@ -869,9 +869,7 @@ function speak(src) {
     new Audio(src);
 
   currentAudio.muted = false;
-
   currentAudio.volume = 1.0;
-
   currentAudio.preload = "auto";
 
   currentAudio.addEventListener(
@@ -882,7 +880,6 @@ function speak(src) {
       if (!currentAudio) return;
 
       currentAudio.muted = false;
-
       currentAudio.volume = 1.0;
 
       currentAudio
@@ -908,9 +905,7 @@ function stopSpeech() {
   if (currentAudio) {
 
     currentAudio.pause();
-
     currentAudio.currentTime = 0;
-
     currentAudio = null;
   }
 }
@@ -1030,7 +1025,6 @@ function cp1(d, total) {
         ) {
 
           fb(good(), 1);
-
           advance();
         }
 
@@ -1042,6 +1036,7 @@ function cp1(d, total) {
       };
     });
 }
+
 // =====================================================
 // CP2
 // =====================================================
@@ -1232,7 +1227,6 @@ function cp2(d, total) {
     ) {
 
       fb(good(), 1);
-
       advance();
     }
 
@@ -1243,8 +1237,6 @@ function cp2(d, total) {
     }
   }
 }
-
-
 // =====================================================
 // TEXT NORMALIZATION
 // =====================================================
@@ -1272,6 +1264,7 @@ function norm(text = "") {
 
 // =====================================================
 // VOICE ACTIVITIES
+// Misi 3, Misi 4 dan Misi 5
 // =====================================================
 
 function renderVoice(
@@ -1358,18 +1351,28 @@ function renderVoice(
     speak(d.audio);
   };
 
+  /*
+    PENTING UNTUK MOBILE:
+    SpeechRecognition dimulakan terus
+    daripada tindakan pengguna menekan butang.
+  */
+
   recordBtn.onclick = () => {
 
     if (isRecording) {
+
       stopRecognition(false);
+
     }
 
     else {
+
       startRecognition(
         d,
         isCP4,
         isCP5
       );
+
     }
   };
 }
@@ -1388,6 +1391,7 @@ function getSpeechRecognition() {
   );
 }
 
+
 function setMicIndicator(
   active,
   text
@@ -1400,13 +1404,15 @@ function setMicIndicator(
 
   if (!indicator) return;
 
-  indicator.textContent = text;
+  indicator.textContent =
+    text;
 
   indicator.classList.toggle(
     "active",
     !!active
   );
 }
+
 
 function setRecordButton(
   recording
@@ -1427,6 +1433,7 @@ function setRecordButton(
     button.classList.add(
       "recording"
     );
+
   }
 
   else {
@@ -1437,10 +1444,14 @@ function setRecordButton(
     button.classList.remove(
       "recording"
     );
+
   }
 }
 
-function setStatus(text = "") {
+
+function setStatus(
+  text = ""
+) {
 
   const el =
     document.querySelector(
@@ -1449,10 +1460,14 @@ function setStatus(text = "") {
 
   if (!el) return;
 
-  el.textContent = text;
+  el.textContent =
+    text;
 }
 
-function setTranscript(text = "") {
+
+function setTranscript(
+  text = ""
+) {
 
   const el =
     document.querySelector(
@@ -1461,7 +1476,8 @@ function setTranscript(text = "") {
 
   if (!el) return;
 
-  el.textContent = text;
+  el.textContent =
+    text;
 }
 
 
@@ -1471,17 +1487,39 @@ function setTranscript(text = "") {
 
 let recognitionSession = 0;
 
-let recognitionShouldStop = false;
+let recognitionShouldStop =
+  false;
 
-let recognitionHadSpeech = false;
+let recognitionHadSpeech =
+  false;
 
-let recognitionEvaluated = false;
+let recognitionEvaluated =
+  false;
 
-let currentVoiceData = null;
+let currentVoiceData =
+  null;
 
-let currentVoiceIsCP4 = false;
+let currentVoiceIsCP4 =
+  false;
 
-let currentVoiceIsCP5 = false;
+let currentVoiceIsCP5 =
+  false;
+
+/*
+  Digunakan untuk mobile.
+
+  Jika recognition pertama tamat sendiri
+  sebelum suara dikesan, game akan cuba
+  hidupkan semula sesi microphone.
+*/
+
+let recognitionRetryCount = 0;
+
+let recognitionRetryTimer =
+  null;
+
+const MAX_RECOGNITION_RETRIES =
+  2;
 
 
 // =====================================================
@@ -1491,7 +1529,8 @@ let currentVoiceIsCP5 = false;
 function startRecognition(
   d,
   isCP4 = false,
-  isCP5 = false
+  isCP5 = false,
+  isRetry = false
 ) {
 
   const SR =
@@ -1511,16 +1550,92 @@ function startRecognition(
     return;
   }
 
+
+  // ===================================================
+  // HENTIKAN AUDIO
+  // ===================================================
+
+  /*
+    Audio soalan mesti dihentikan dahulu
+    sebelum microphone digunakan.
+  */
+
   stopSpeech();
 
-  stopRecognition(true);
+
+  // ===================================================
+  // BATAL RETRY LAMA
+  // ===================================================
+
+  if (
+    recognitionRetryTimer
+  ) {
+
+    clearTimeout(
+      recognitionRetryTimer
+    );
+
+    recognitionRetryTimer =
+      null;
+  }
+
+
+  // ===================================================
+  // BERSIHKAN SESI LAMA
+  // ===================================================
+
+  if (!isRetry) {
+
+    recognitionRetryCount =
+      0;
+
+    stopRecognition(true);
+
+  }
+
+  else {
+
+    /*
+      Jika ini auto-retry,
+      buang instance recognition lama
+      sebelum membuat instance baru.
+    */
+
+    if (recognition) {
+
+      const oldRecognition =
+        recognition;
+
+      recognition =
+        null;
+
+      isRecording =
+        false;
+
+      try {
+
+        oldRecognition.abort();
+
+      }
+
+      catch (e) {}
+
+    }
+  }
+
+
+  // ===================================================
+  // SESSION BARU
+  // ===================================================
 
   recognitionSession += 1;
 
   const session =
     recognitionSession;
 
-  currentVoiceData = d;
+
+  currentVoiceData =
+    d;
 
   currentVoiceIsCP4 =
     isCP4;
@@ -1528,9 +1643,17 @@ function startRecognition(
   currentVoiceIsCP5 =
     isCP5;
 
-  finalTranscript = "";
 
-  interimTranscript = "";
+  if (!isRetry) {
+
+    finalTranscript =
+      "";
+
+    interimTranscript =
+      "";
+
+  }
+
 
   recognitionShouldStop =
     false;
@@ -1541,22 +1664,42 @@ function startRecognition(
   recognitionEvaluated =
     false;
 
+
+  // ===================================================
+  // CIPTA SPEECH RECOGNITION
+  // ===================================================
+
   const r =
     new SR();
 
-  recognition = r;
+  recognition =
+    r;
+
 
   r.lang =
     "ms-MY";
 
+  /*
+    continuous=false lebih stabil
+    pada browser mobile.
+
+    Murid masih boleh tekan
+    BERHENTI RAKAM secara manual.
+  */
+
   r.continuous =
-    true;
+    false;
 
   r.interimResults =
     true;
 
   r.maxAlternatives =
     5;
+
+
+  // ===================================================
+  // MICROPHONE START
+  // ===================================================
 
   r.onstart = () => {
 
@@ -1567,24 +1710,42 @@ function startRecognition(
       return;
     }
 
-    isRecording = true;
 
-    setRecordButton(true);
+    isRecording =
+      true;
+
+
+    setRecordButton(
+      true
+    );
+
 
     setMicIndicator(
       true,
       "🎙️ Mikrofon aktif — sedang mendengar..."
     );
 
+
     setStatus(
       "Saya sedang mendengar..."
     );
 
-    setTranscript(
-      "Mula bertutur..."
-    );
+
+    if (
+      !finalTranscript.trim()
+    ) {
+
+      setTranscript(
+        "Mula bertutur..."
+      );
+
+    }
   };
 
+
+  // ===================================================
+  // SUARA MULA DIKESAN
+  // ===================================================
 
   r.onspeechstart = () => {
 
@@ -1595,15 +1756,22 @@ function startRecognition(
       return;
     }
 
+
     recognitionHadSpeech =
       true;
+
 
     setMicIndicator(
       true,
       "🗣️ Suara dikesan — teruskan bertutur..."
     );
+
   };
 
+
+  // ===================================================
+  // SUARA BERHENTI
+  // ===================================================
 
   r.onspeechend = () => {
 
@@ -1614,12 +1782,18 @@ function startRecognition(
       return;
     }
 
+
     setMicIndicator(
       true,
-      "🎙️ Mikrofon masih aktif"
+      "🎙️ Memproses suara..."
     );
+
   };
 
+
+  // ===================================================
+  // RESULT SUARA
+  // ===================================================
 
   r.onresult = event => {
 
@@ -1630,10 +1804,13 @@ function startRecognition(
       return;
     }
 
+
     recognitionHadSpeech =
       true;
 
-    interimTranscript = "";
+    interimTranscript =
+      "";
+
 
     for (
       let i = event.resultIndex;
@@ -1647,18 +1824,24 @@ function startRecognition(
       const transcript =
         result[0].transcript;
 
-      if (result.isFinal) {
+
+      if (
+        result.isFinal
+      ) {
 
         finalTranscript +=
           " " + transcript;
+
       }
 
       else {
 
         interimTranscript +=
           " " + transcript;
+
       }
     }
+
 
     const display =
       (
@@ -1667,16 +1850,29 @@ function startRecognition(
         interimTranscript
       ).trim();
 
+
     if (display) {
 
-      setTranscript(display);
+      setTranscript(
+        display
+      );
 
       setStatus(
-        "🎙️ Suara sedang dikesan..."
+        "🎙️ Suara berjaya dikesan."
       );
+
+      setMicIndicator(
+        true,
+        "🗣️ Suara dikesan"
+      );
+
     }
   };
 
+
+  // ===================================================
+  // ERROR
+  // ===================================================
 
   r.onerror = event => {
 
@@ -1687,76 +1883,199 @@ function startRecognition(
       return;
     }
 
+
     const error =
       event.error;
 
+
+    isRecording =
+      false;
+
+    setRecordButton(
+      false
+    );
+
+
+    // ===============================================
+    // PERMISSION DITOLAK
+    // ===============================================
+
     if (
-      error ===
-        "not-allowed" ||
-      error ===
-        "service-not-allowed"
+      error === "not-allowed" ||
+      error === "service-not-allowed"
     ) {
+
+      recognition =
+        null;
+
 
       setStatus(
         "⚠️ Akses mikrofon tidak dibenarkan."
       );
 
+
       setMicIndicator(
         false,
         "🎤 Mikrofon tidak dibenarkan"
       );
+
+
+      return;
     }
 
-    else if (
-      error ===
-      "no-speech"
+
+    // ===============================================
+    // MOBILE RETRY
+    // ===============================================
+
+    const retryable =
+      error === "no-speech" ||
+      error === "audio-capture" ||
+      error === "network" ||
+      error === "aborted";
+
+
+    if (
+      retryable &&
+      !recognitionShouldStop &&
+      recognitionRetryCount <
+        MAX_RECOGNITION_RETRIES
+    ) {
+
+      recognitionRetryCount +=
+        1;
+
+
+      recognition =
+        null;
+
+
+      setMicIndicator(
+        false,
+        "🎤 Menyambung semula mikrofon..."
+      );
+
+
+      setStatus(
+        "🎙️ Mikrofon sedang disambungkan semula..."
+      );
+
+
+      recognitionRetryTimer =
+        window.setTimeout(
+          () => {
+
+            recognitionRetryTimer =
+              null;
+
+
+            /*
+              Jangan restart jika pengguna
+              sudah keluar/tukar soalan.
+            */
+
+            if (
+              session !==
+              recognitionSession
+            ) {
+              return;
+            }
+
+
+            if (
+              recognitionShouldStop
+            ) {
+              return;
+            }
+
+
+            startRecognition(
+              currentVoiceData,
+              currentVoiceIsCP4,
+              currentVoiceIsCP5,
+              true
+            );
+
+          },
+          400
+        );
+
+
+      return;
+    }
+
+
+    recognition =
+      null;
+
+
+    // ===============================================
+    // TIADA SUARA
+    // ===============================================
+
+    if (
+      error === "no-speech"
     ) {
 
       setStatus(
-        "🎤 Suara belum dapat dikesan. Cuba rakam sekali lagi."
+        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
       );
+
 
       setMicIndicator(
         false,
         "🎤 Tiada suara dikesan"
       );
+
     }
 
+
+    // ===============================================
+    // AUDIO CAPTURE
+    // ===============================================
+
     else if (
-      error ===
-      "audio-capture"
+      error === "audio-capture"
     ) {
 
       setStatus(
-        "⚠️ Mikrofon tidak dapat digunakan."
+        "⚠️ Mikrofon tidak dapat digunakan. Cuba sekali lagi."
       );
+
 
       setMicIndicator(
         false,
         "🎤 Mikrofon tidak tersedia"
       );
+
     }
 
+
+    // ===============================================
+    // ERROR LAIN
+    // ===============================================
+
     else if (
-      error !==
-      "aborted"
+      error !== "aborted"
     ) {
 
       setStatus(
         "⚠️ Rakaman terganggu. Cuba sekali lagi."
       );
 
+
       setMicIndicator(
         false,
         "🎤 Rakaman terganggu"
       );
+
     }
-
-    isRecording = false;
-
-    setRecordButton(false);
   };
 
+
+  // ===================================================
+  // RECOGNITION TAMAT
+  // ===================================================
 
   r.onend = () => {
 
@@ -1767,19 +2086,33 @@ function startRecognition(
       return;
     }
 
+
     const shouldEvaluate =
       recognitionShouldStop;
 
-    isRecording = false;
 
-    recognition = null;
+    isRecording =
+      false;
 
-    setRecordButton(false);
 
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
+    if (
+      recognition === r
+    ) {
+
+      recognition =
+        null;
+
+    }
+
+
+    setRecordButton(
+      false
     );
+
+
+    // ===============================================
+    // PENGGUNA TEKAN BERHENTI RAKAM
+    // ===============================================
 
     if (
       shouldEvaluate &&
@@ -1789,53 +2122,261 @@ function startRecognition(
       recognitionEvaluated =
         true;
 
+
+      setMicIndicator(
+        false,
+        "🎤 Mikrofon tidak aktif"
+      );
+
+
       evaluateVoiceResponse(
         currentVoiceData,
         currentVoiceIsCP4,
         currentVoiceIsCP5
       );
 
+
       return;
     }
 
+
+    // ===============================================
+    // ADA SUARA
+    // ===============================================
+
+    /*
+      Pada mobile continuous=false boleh tamat
+      sendiri selepas murid selesai bercakap.
+
+      Kalau kita sudah menerima suara,
+      terus nilai jawapan supaya murid
+      tidak perlu menekan X / masuk semula.
+    */
+
     if (
       !shouldEvaluate &&
-      recognitionHadSpeech
+      recognitionHadSpeech &&
+      !recognitionEvaluated
+    ) {
+
+      const spokenNow =
+        (
+          finalTranscript +
+          " " +
+          interimTranscript
+        ).trim();
+
+
+      if (spokenNow) {
+
+        recognitionEvaluated =
+          true;
+
+
+        setMicIndicator(
+          false,
+          "🎤 Mikrofon tidak aktif"
+        );
+
+
+        evaluateVoiceResponse(
+          currentVoiceData,
+          currentVoiceIsCP4,
+          currentVoiceIsCP5
+        );
+
+
+        return;
+      }
+    }
+
+
+    // ===============================================
+    // MOBILE FIRST-ENTRY FIX
+    // ===============================================
+
+    /*
+      Inilah kes yang cikgu alami:
+
+      masuk Misi 3/4/5 kali pertama,
+      microphone tidak detect.
+
+      Sebelum ini perlu:
+      X → masuk balik.
+
+      Sekarang kalau sesi pertama mati
+      tanpa mendengar suara, sistem cuba
+      buka recognition baru secara automatik.
+    */
+
+    if (
+      !shouldEvaluate &&
+      !recognitionHadSpeech &&
+      recognitionRetryCount <
+        MAX_RECOGNITION_RETRIES &&
+      !recognitionRetryTimer
+    ) {
+
+      recognitionRetryCount +=
+        1;
+
+
+      setMicIndicator(
+        false,
+        "🎤 Menyambung semula mikrofon..."
+      );
+
+
+      setStatus(
+        "🎙️ Mikrofon sedang disambungkan semula..."
+      );
+
+
+      recognitionRetryTimer =
+        window.setTimeout(
+          () => {
+
+            recognitionRetryTimer =
+              null;
+
+
+            if (
+              session !==
+              recognitionSession
+            ) {
+              return;
+            }
+
+
+            if (
+              recognitionShouldStop
+            ) {
+              return;
+            }
+
+
+            startRecognition(
+              currentVoiceData,
+              currentVoiceIsCP4,
+              currentVoiceIsCP5,
+              true
+            );
+
+          },
+          400
+        );
+
+
+      return;
+    }
+
+
+    // ===============================================
+    // RETRY HABIS
+    // ===============================================
+
+    setMicIndicator(
+      false,
+      "🎤 Mikrofon tidak aktif"
+    );
+
+
+    if (
+      !recognitionHadSpeech
     ) {
 
       setStatus(
-        "Tekan MULA RAKAM untuk mencuba sekali lagi."
+        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
       );
+
     }
+
   };
 
 
+  // ===================================================
+  // START SPEECH RECOGNITION
+  // ===================================================
+
+  try {
+
+    r.start();
+
+  }
+
+  catch (error) {
+
+    recognition =
+      null;
+
+    isRecording =
+      false;
+
+    setRecordButton(
+      false
+    );
 
 
- try {
+    // Cuba semula jika browser mobile
+    // belum bersedia membuka microphone.
 
-  r.start();
+    if (
+      recognitionRetryCount <
+      MAX_RECOGNITION_RETRIES
+    ) {
 
+      recognitionRetryCount +=
+        1;
+
+
+      setMicIndicator(
+        false,
+        "🎤 Menyambung semula mikrofon..."
+      );
+
+
+      setStatus(
+        "🎙️ Mikrofon sedang disambungkan semula..."
+      );
+
+
+      recognitionRetryTimer =
+        window.setTimeout(
+          () => {
+
+            recognitionRetryTimer =
+              null;
+
+
+            startRecognition(
+              currentVoiceData,
+              currentVoiceIsCP4,
+              currentVoiceIsCP5,
+              true
+            );
+
+          },
+          400
+        );
+
+    }
+
+    else {
+
+      setMicIndicator(
+        false,
+        "🎤 Mikrofon tidak aktif"
+      );
+
+
+      setStatus(
+        "⚠️ Rakaman belum dapat dimulakan. Tekan MULA RAKAM dan cuba lagi."
+      );
+
+    }
+  }
 }
 
-catch (error) {
-
-  recognition = null;
-
-  isRecording = false;
-
-  setRecordButton(false);
-
-  setMicIndicator(
-    false,
-    "🎤 Mikrofon tidak aktif"
-  );
-
-  setStatus(
-    "⚠️ Rakaman belum dapat dimulakan. Cuba sekali lagi."
-  );
-}
-}
 
 // =====================================================
 // STOP RECOGNITION
@@ -1845,70 +2386,169 @@ function stopRecognition(
   silent = false
 ) {
 
+  // ===================================================
+  // BATAL AUTO RETRY
+  // ===================================================
+
+  if (
+    recognitionRetryTimer
+  ) {
+
+    clearTimeout(
+      recognitionRetryTimer
+    );
+
+    recognitionRetryTimer =
+      null;
+  }
+
+
+  // ===================================================
+  // TIADA RECOGNITION AKTIF
+  // ===================================================
+
   if (!recognition) {
 
-    isRecording = false;
+    isRecording =
+      false;
 
-    setRecordButton(false);
+
+    setRecordButton(
+      false
+    );
+
 
     if (silent) {
 
-      finalTranscript = "";
+      /*
+        Naikkan session supaya callback
+        lama tidak boleh mengganggu
+        misi/soalan baru.
+      */
 
-      interimTranscript = "";
+      recognitionSession +=
+        1;
+
+
+      recognitionShouldStop =
+        false;
+
+
+      recognitionEvaluated =
+        true;
+
+
+      recognitionHadSpeech =
+        false;
+
+
+      recognitionRetryCount =
+        0;
+
+
+      finalTranscript =
+        "";
+
+
+      interimTranscript =
+        "";
+
     }
+
 
     return;
   }
 
+
   const r =
     recognition;
 
+
+  // ===================================================
+  // SILENT STOP
+  // Tukar soalan / keluar misi
+  // ===================================================
+
   if (silent) {
 
-    recognitionSession += 1;
+    recognitionSession +=
+      1;
+
 
     recognitionShouldStop =
       false;
 
+
     recognitionEvaluated =
       true;
 
-    recognition = null;
 
-    isRecording = false;
+    recognitionHadSpeech =
+      false;
 
-    finalTranscript = "";
 
-    interimTranscript = "";
+    recognitionRetryCount =
+      0;
+
+
+    recognition =
+      null;
+
+
+    isRecording =
+      false;
+
+
+    finalTranscript =
+      "";
+
+
+    interimTranscript =
+      "";
+
 
     try {
+
       r.abort();
+
     }
 
     catch (e) {}
 
-    setRecordButton(false);
+
+    setRecordButton(
+      false
+    );
+
 
     setMicIndicator(
       false,
       "🎤 Mikrofon tidak aktif"
     );
 
+
     return;
   }
 
+
+  // ===================================================
+  // USER TEKAN BERHENTI RAKAM
+  // ===================================================
+
   recognitionShouldStop =
     true;
+
 
   setStatus(
     "⏳ Memproses rakaman..."
   );
 
+
   setMicIndicator(
     false,
     "⏹️ Rakaman dihentikan"
   );
+
 
   try {
 
@@ -1918,11 +2558,18 @@ function stopRecognition(
 
   catch (e) {
 
-    recognition = null;
+    recognition =
+      null;
 
-    isRecording = false;
 
-    setRecordButton(false);
+    isRecording =
+      false;
+
+
+    setRecordButton(
+      false
+    );
+
 
     if (
       !recognitionEvaluated
@@ -1931,11 +2578,13 @@ function stopRecognition(
       recognitionEvaluated =
         true;
 
+
       evaluateVoiceResponse(
         currentVoiceData,
         currentVoiceIsCP4,
         currentVoiceIsCP5
       );
+
     }
   }
 }
@@ -1958,8 +2607,14 @@ function evaluateVoiceResponse(
       interimTranscript
     ).trim();
 
+
   const spoken =
     norm(raw);
+
+
+  // ===================================================
+  // TIADA SUARA
+  // ===================================================
 
   if (!spoken) {
 
@@ -1967,24 +2622,40 @@ function evaluateVoiceResponse(
       "Tiada suara yang dapat dikenal pasti."
     );
 
+
     setStatus(
       "🎤 Suara belum dapat dikesan. Sila cuba rakam sekali lagi."
     );
+
 
     fb(
       "🎤 Cuba rakam sekali lagi.",
       0
     );
 
+
     return;
   }
 
-  setTranscript(raw);
 
-  let correct = false;
+  setTranscript(
+    raw
+  );
+
+
+  let correct =
+    false;
+
+
+  // ===================================================
+  // MISI 3
+  // Salah satu keyword diterima
+  // ===================================================
 
   if (
-    Array.isArray(d.keywords)
+    Array.isArray(
+      d.keywords
+    )
   ) {
 
     correct =
@@ -1994,10 +2665,19 @@ function evaluateVoiceResponse(
             norm(keyword)
           )
       );
+
   }
 
+
+  // ===================================================
+  // MISI 4
+  // Salah satu respons diterima
+  // ===================================================
+
   else if (
-    Array.isArray(d.any)
+    Array.isArray(
+      d.any
+    )
   ) {
 
     correct =
@@ -2007,10 +2687,19 @@ function evaluateVoiceResponse(
             norm(keyword)
           )
       );
+
   }
 
+
+  // ===================================================
+  // MISI 4 SOALAN 3 / MISI 5
+  // Semua keyword perlu ada
+  // ===================================================
+
   else if (
-    Array.isArray(d.all)
+    Array.isArray(
+      d.all
+    )
   ) {
 
     correct =
@@ -2020,7 +2709,13 @@ function evaluateVoiceResponse(
             norm(keyword)
           )
       );
+
   }
+
+
+  // ===================================================
+  // BETUL
+  // ===================================================
 
   if (correct) {
 
@@ -2028,19 +2723,28 @@ function evaluateVoiceResponse(
       "✅ Respons diterima."
     );
 
+
     fb(
       good(),
       1
     );
 
+
     advance();
+
   }
+
+
+  // ===================================================
+  // SALAH
+  // ===================================================
 
   else {
 
     setStatus(
       "🔄 Cuba berikan respons sekali lagi."
     );
+
 
     fb(
       isCP5
@@ -2050,10 +2754,9 @@ function evaluateVoiceResponse(
           : "👂 Dengar semula dan cuba jawab sekali lagi.",
       0
     );
+
   }
 }
-
-
 // =====================================================
 // ADVANCE ACTIVITY
 // =====================================================
@@ -2095,11 +2798,13 @@ function advance() {
       ) {
 
         renderActivity(id);
+
       }
 
       else {
 
         completeCP(id);
+
       }
     },
     900
@@ -2128,21 +2833,29 @@ function completeCP(id) {
     );
   }
 
+  /*
+    Misi 4:
+    +10 selepas seluruh misi selesai.
+  */
+
   if (id === 4) {
 
     game.score += 10;
+
   }
 
   if (id < 5) {
 
     game.currentCheckpoint =
       id + 1;
+
   }
 
   else {
 
     game.currentCheckpoint =
       6;
+
   }
 
   updateHUD();
@@ -2197,6 +2910,8 @@ function completeCP(id) {
     handleInteraction();
   };
 }
+
+
 // =====================================================
 // MOBILE INTERACTION BUTTON
 // =====================================================
@@ -2204,16 +2919,24 @@ function completeCP(id) {
 interactBtn.addEventListener(
   "pointerup",
   event => {
+
     event.preventDefault();
+
     interact();
+
   }
 );
+
 
 // =====================================================
 // RESULT
 // =====================================================
 
 function showResults() {
+
+  stopSpeech();
+
+  stopRecognition(true);
 
   document
     .querySelector("#resultText")
@@ -2230,12 +2953,14 @@ function showResults() {
   );
 }
 
+
 document
   .querySelector("#restartBtn")
   .addEventListener(
     "click",
     () => location.reload()
   );
+
 
 document
   .querySelector("#homeBtn")
@@ -2244,11 +2969,15 @@ document
     () => location.reload()
   );
 
+
 // =====================================================
 // KEYBOARD
 // =====================================================
 
-function setKey(key, down) {
+function setKey(
+  key,
+  down
+) {
 
   const allowed = [
     "ArrowUp",
@@ -2265,14 +2994,21 @@ function setKey(key, down) {
     "D"
   ];
 
-  if (!allowed.includes(key)) {
+  if (
+    !allowed.includes(key)
+  ) {
     return;
   }
 
   down
-    ? keys.add(key.toLowerCase())
-    : keys.delete(key.toLowerCase());
+    ? keys.add(
+        key.toLowerCase()
+      )
+    : keys.delete(
+        key.toLowerCase()
+      );
 }
+
 
 window.addEventListener(
   "keydown",
@@ -2284,9 +3020,13 @@ window.addEventListener(
         "ArrowDown",
         "ArrowLeft",
         "ArrowRight"
-      ].includes(event.key)
+      ].includes(
+        event.key
+      )
     ) {
+
       event.preventDefault();
+
     }
 
     if (
@@ -2294,10 +3034,16 @@ window.addEventListener(
         event.key === "e" ||
         event.key === "E"
       ) &&
-      modal.classList.contains("hidden") &&
-      !gameScreen.classList.contains("hidden")
+      modal.classList.contains(
+        "hidden"
+      ) &&
+      !gameScreen.classList.contains(
+        "hidden"
+      )
     ) {
+
       interact();
+
     }
 
     setKey(
@@ -2307,14 +3053,17 @@ window.addEventListener(
   }
 );
 
+
 window.addEventListener(
   "keyup",
   event =>
+
     setKey(
       event.key,
       false
     )
 );
+
 
 // =====================================================
 // D-PAD
@@ -2340,6 +3089,7 @@ document
       );
     };
 
+
     const off = event => {
 
       event.preventDefault();
@@ -2351,26 +3101,32 @@ document
       );
     };
 
+
     button.addEventListener(
       "pointerdown",
       on
     );
+
 
     button.addEventListener(
       "pointerup",
       off
     );
 
+
     button.addEventListener(
       "pointercancel",
       off
     );
 
+
     button.addEventListener(
       "pointerleave",
       off
     );
+
   });
+
 
 // =====================================================
 // PLAYER MOVEMENT
@@ -2379,50 +3135,78 @@ document
 function updatePlayer(time) {
 
   if (
-    !modal.classList.contains("hidden") ||
-    !resultModal.classList.contains("hidden")
+    !modal.classList.contains(
+      "hidden"
+    ) ||
+    !resultModal.classList.contains(
+      "hidden"
+    )
   ) {
+
     return;
+
   }
+
 
   let dx = 0;
   let dy = 0;
+
 
   if (
     keys.has("arrowleft") ||
     keys.has("a")
   ) {
+
     dx--;
+
   }
+
 
   if (
     keys.has("arrowright") ||
     keys.has("d")
   ) {
+
     dx++;
+
   }
+
 
   if (
     keys.has("arrowup") ||
     keys.has("w")
   ) {
+
     dy--;
+
   }
+
 
   if (
     keys.has("arrowdown") ||
     keys.has("s")
   ) {
+
     dy++;
+
   }
+
 
   game.player.moving =
-    dx !== 0 || dy !== 0;
+    dx !== 0 ||
+    dy !== 0;
 
-  if (dx && dy) {
+
+  if (
+    dx &&
+    dy
+  ) {
+
     dx *= 0.707;
     dy *= 0.707;
+
   }
+
 
   if (dy > 0) {
 
@@ -2452,15 +3236,18 @@ function updatePlayer(time) {
 
   }
 
+
   game.player.x =
     Math.max(
       70,
       Math.min(
         MAP_W - 70,
         game.player.x +
-          dx * game.player.speed
+          dx *
+          game.player.speed
       )
     );
+
 
   game.player.y =
     Math.max(
@@ -2468,9 +3255,11 @@ function updatePlayer(time) {
       Math.min(
         MAP_H - 30,
         game.player.y +
-          dy * game.player.speed
+          dy *
+          game.player.speed
       )
     );
+
 
   if (
     game.player.moving &&
@@ -2478,12 +3267,20 @@ function updatePlayer(time) {
   ) {
 
     game.player.frame =
-      (game.player.frame % 4) + 1;
+      (
+        game.player.frame %
+        4
+      ) + 1;
 
-    lastAnim = time;
+    lastAnim =
+      time;
+
   }
 
-  if (game.player.moving) {
+
+  if (
+    game.player.moving
+  ) {
 
     playerSprite.src =
       `assets/player/petara-${game.player.direction}-${game.player.frame || 1}.png`;
@@ -2493,17 +3290,23 @@ function updatePlayer(time) {
   else {
 
     playerSprite.src =
-      game.player.direction === "down"
+      game.player.direction ===
+      "down"
         ? "assets/player/petara-idle.png"
         : `assets/player/petara-${game.player.direction}-1.png`;
+
   }
 
+
   player.style.left =
-    game.player.x + "px";
+    game.player.x +
+    "px";
 
   player.style.top =
-    game.player.y + "px";
+    game.player.y +
+    "px";
 }
+
 
 // =====================================================
 // CAMERA
@@ -2516,30 +3319,44 @@ function updateCamera() {
       "#worldViewport"
     );
 
+
   const vw =
     viewport.clientWidth;
 
   const vh =
     viewport.clientHeight;
 
+
   const scaledW =
-    MAP_W * scale;
+    MAP_W *
+    scale;
 
   const scaledH =
-    MAP_H * scale;
+    MAP_H *
+    scale;
+
 
   let tx =
     vw / 2 -
-    game.player.x * scale;
+    game.player.x *
+    scale;
+
 
   let ty =
     vh / 2 -
-    game.player.y * scale;
+    game.player.y *
+    scale;
 
-  if (scaledW <= vw) {
+
+  if (
+    scaledW <= vw
+  ) {
 
     tx =
-      (vw - scaledW) / 2;
+      (
+        vw -
+        scaledW
+      ) / 2;
 
   }
 
@@ -2549,16 +3366,24 @@ function updateCamera() {
       Math.min(
         0,
         Math.max(
-          vw - scaledW,
+          vw -
+            scaledW,
           tx
         )
       );
+
   }
 
-  if (scaledH <= vh) {
+
+  if (
+    scaledH <= vh
+  ) {
 
     ty =
-      (vh - scaledH) / 2;
+      (
+        vh -
+        scaledH
+      ) / 2;
 
   }
 
@@ -2568,15 +3393,19 @@ function updateCamera() {
       Math.min(
         0,
         Math.max(
-          vh - scaledH,
+          vh -
+            scaledH,
           ty
         )
       );
+
   }
+
 
   world.style.transform =
     `translate(${tx}px,${ty}px) scale(${scale})`;
 }
+
 
 // =====================================================
 // RESPONSIVE WORLD
@@ -2589,11 +3418,13 @@ function resizeWorld() {
       "#worldViewport"
     );
 
+
   const vw =
     viewport.clientWidth;
 
   const vh =
     viewport.clientHeight;
+
 
   const cover =
     Math.max(
@@ -2601,8 +3432,10 @@ function resizeWorld() {
       vh / MAP_H
     );
 
+
   const portrait =
     vh > vw;
+
 
   const minimum =
     portrait
@@ -2613,34 +3446,43 @@ function resizeWorld() {
             : 0.72
         );
 
+
   scale =
     Math.max(
       minimum,
       cover
     );
 
+
   world.style.width =
-    MAP_W + "px";
+    MAP_W +
+    "px";
 
   world.style.height =
-    MAP_H + "px";
+    MAP_H +
+    "px";
+
 
   updateCamera();
 }
+
 
 window.addEventListener(
   "resize",
   resizeWorld
 );
 
+
 window.addEventListener(
   "orientationchange",
   () =>
+
     setTimeout(
       resizeWorld,
       180
     )
 );
+
 
 // =====================================================
 // GAME LOOP
@@ -2654,5 +3496,7 @@ function loop(time) {
 
   handleInteraction();
 
-  requestAnimationFrame(loop);
+  requestAnimationFrame(
+    loop
+  );
 }
