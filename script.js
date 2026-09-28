@@ -1217,28 +1217,34 @@ function newRec() {
   // MICROPHONE REALLY STARTED
   // ---------------------------------------------------
 
-  r.onstart = () => {
+ r.onstart = () => {
 
-    recognitionStarting = false;
+  recognitionStarting = false;
+  isRecording = true;
 
-    const indicator =
-      document.querySelector("#micIndicator");
+  const indicator =
+    document.querySelector("#micIndicator");
 
-    const status =
-      document.querySelector("#recordStatus");
+  const status =
+    document.querySelector("#recordStatus");
 
-    if (indicator) {
-      indicator.textContent =
-        "🟢 Mikrofon sedang mendengar...";
+  if (indicator) {
+    indicator.textContent =
+      "🟢 Mikrofon sedang mendengar...";
 
-      indicator.classList.add("active");
-    }
+    indicator.classList.add("active");
+  }
 
-    if (status) {
-      status.textContent =
-        "🎙️ Sedang mendengar... Bercakap sekarang.";
-    }
-  };
+  if (status) {
+    status.textContent =
+      "🎙️ Sedang mendengar... Bercakap sekarang.";
+  }
+
+  // PENTING:
+  // Aktifkan semula button selepas mikrofon
+  // betul-betul berjaya dibuka.
+  updateRecordButton();
+};
 
 
   // ---------------------------------------------------
