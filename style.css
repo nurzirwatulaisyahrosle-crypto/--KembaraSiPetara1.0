@@ -2209,3 +2209,69 @@ and (max-height: 600px) {
     margin-top: 10px;
   }
 }
+/* =========================================
+   WARNA BACKGROUND MENGIKUT SOALAN
+========================================= */
+
+.question-page {
+  width: 100%;
+  border-radius: 20px;
+  padding: 16px 18px 20px;
+  box-sizing: border-box;
+  transition: background-color 0.35s ease;
+}
+
+/* Soalan 1 — Pink */
+.question-page.question-1 {
+  background-color: #EFA3C8;
+}
+
+/* Soalan 2 — Biru */
+.question-page.question-2 {
+  background-color: #8FB8E8;
+}
+
+/* Soalan 3 — Kuning */
+.question-page.question-3 {
+  background-color: #F4D77A;
+}
+
+/* MISI kecil di sebelah kiri */
+.activity-mission {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  width: fit-content;
+  padding: 0;
+  margin: 0 0 5px 0;
+
+  text-align: left;
+  font-size: 13px;
+  font-weight: 800;
+  color: #263238;
+}
+
+/* SOALAN tanpa kotak */
+.activity-question {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  padding: 0;
+  margin: 3px 0 16px;
+
+  text-align: center;
+  font-size: 24px;
+  font-weight: 900;
+  color: #263238;
+}
+
+/* Tajuk aktiviti di bawah */
+.activity-title {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #37474f;
+}
