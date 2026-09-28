@@ -1483,11 +1483,10 @@ function setTranscript(
 
 // =====================================================
 // SPEECH RECOGNITION STATE
-// UNIVERSAL: iPhone / Android / Windows
+// SIMPLE VERSION — SAME APPROACH AS MIC TEST
 // =====================================================
 
 let recognitionSession = 0;
-
 let recognitionShouldStop = false;
 let recognitionEvaluated = false;
 
@@ -1514,40 +1513,55 @@ function startRecognition(
       "⚠️ Rakaman suara tidak disokong oleh pelayar ini."
     );
 
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak tersedia"
-    );
-
     return;
   }
 
 
-  // Jangan buka dua mikrofon serentak
-  if (isRecording || recognition) {
-    return;
+  // Pastikan tiada recognition lama tertinggal
+  if (recognition) {
+
+    try {
+      recognition.abort();
+    } catch (e) {}
+
+    recognition = null;
   }
 
 
-  // Pastikan audio soalan berhenti dahulu
   stopSpeech();
 
 
+  // Simpan soalan semasa
   currentVoiceData = d;
   currentVoiceIsCP4 = isCP4;
   currentVoiceIsCP5 = isCP5;
 
 
-  // Rakaman baru = transcript baru
+  // Reset rakaman
   finalTranscript = "";
   interimTranscript = "";
 
   recognitionShouldStop = false;
   recognitionEvaluated = false;
 
-  recognitionSession += 1;
+  recognitionSession++;
 
-  const session = recognitionSession;
+  const thisSession =
+    recognitionSession;
+
+
+  // Recognition BARU setiap kali tekan MULA RAKAM
+  const r =
+    new SR();
+
+  recognition = r;
+
+
+  // Sama seperti UJI MIKROFON
+  r.lang = "ms-MY";
+  r.continuous = false;
+  r.interimResults = true;
+  r.maxAlternatives = 5;
 
 
   setTranscript(
@@ -1565,26 +1579,14 @@ function startRecognition(
 
 
   // ===================================================
-  // CIPTA SATU RECOGNITION BARU
-  // ===================================================
-
-  const r = new SR();
-
-  recognition = r;
-
-  r.lang = "ms-MY";
-  r.continuous = false;
-  r.interimResults = true;
-  r.maxAlternatives = 5;
-
-
-  // ===================================================
-  // ON START
+  // START
   // ===================================================
 
   r.onstart = () => {
 
-    if (session !== recognitionSession) {
+    if (
+      thisSession !== recognitionSession
+    ) {
       return;
     }
 
@@ -1609,13 +1611,15 @@ function startRecognition(
 
   r.onspeechstart = () => {
 
-    if (session !== recognitionSession) {
+    if (
+      thisSession !== recognitionSession
+    ) {
       return;
     }
 
     setMicIndicator(
       true,
-      "🗣️ Suara dikesan — teruskan bertutur..."
+      "🗣️ Suara dikesan"
     );
 
     setStatus(
@@ -1630,11 +1634,16 @@ function startRecognition(
 
   r.onresult = event => {
 
-    if (session !== recognitionSession) {
+    if (
+      thisSession !== recognitionSession
+    ) {
       return;
     }
 
-    interimTranscript = "";
+
+    let finalText = "";
+    let interimText = "";
+
 
     for (
       let i = event.resultIndex;
@@ -1642,20 +1651,35 @@ function startRecognition(
       i++
     ) {
 
-      const result = event.results[i];
-      const text = result[0].transcript;
+      const result =
+        event.results[i];
+
+      const text =
+        result[0].transcript;
+
 
       if (result.isFinal) {
 
-        finalTranscript +=
+        finalText +=
           " " + text;
 
       } else {
 
-        interimTranscript +=
+        interimText +=
           " " + text;
       }
     }
+
+
+    if (finalText) {
+
+      finalTranscript +=
+        " " + finalText;
+    }
+
+
+    interimTranscript =
+      interimText;
 
 
     const display =
@@ -1690,34 +1714,36 @@ function startRecognition(
 
   r.onerror = event => {
 
-    if (session !== recognitionSession) {
+    if (
+      thisSession !== recognitionSession
+    ) {
       return;
     }
-
-    const error = event.error;
 
 
     if (
-      error === "not-allowed" ||
-      error === "service-not-allowed"
+      event.error === "aborted"
+    ) {
+      return;
+    }
+
+
+    if (
+      event.error === "not-allowed" ||
+      event.error === "service-not-allowed"
     ) {
 
-      recognitionShouldStop = true;
-
-      setMicIndicator(
-        false,
-        "🎤 Mikrofon tidak dibenarkan"
-      );
-
       setStatus(
-        "⚠️ Sila benarkan akses mikrofon dan cuba lagi."
+        "⚠️ Sila benarkan akses mikrofon."
       );
 
       return;
     }
 
 
-    if (error === "no-speech") {
+    if (
+      event.error === "no-speech"
+    ) {
 
       setStatus(
         "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
@@ -1727,23 +1753,20 @@ function startRecognition(
     }
 
 
-    if (error === "audio-capture") {
+    if (
+      event.error === "audio-capture"
+    ) {
 
       setStatus(
-        "🎤 Mikrofon belum dapat digunakan. Cuba rakam sekali lagi."
+        "⚠️ Mikrofon tidak dapat digunakan. Cuba sekali lagi."
       );
 
       return;
     }
 
 
-    if (error === "aborted") {
-      return;
-    }
-
-
     setStatus(
-      "🎤 Rakaman terganggu. Cuba rakam sekali lagi."
+      "⚠️ Rakaman terganggu. Cuba sekali lagi."
     );
   };
 
@@ -1754,7 +1777,9 @@ function startRecognition(
 
   r.onend = () => {
 
-    if (session !== recognitionSession) {
+    if (
+      thisSession !== recognitionSession
+    ) {
       return;
     }
 
@@ -1762,6 +1787,7 @@ function startRecognition(
     if (recognition === r) {
       recognition = null;
     }
+
 
     isRecording = false;
 
@@ -1773,8 +1799,18 @@ function startRecognition(
     );
 
 
-    // Murid sendiri tekan BERHENTI
-    if (recognitionShouldStop) {
+    const heard =
+      (
+        finalTranscript +
+        " " +
+        interimTranscript
+      )
+        .replace(/\s+/g, " ")
+        .trim();
+
+
+    // Ada suara → terus nilai
+    if (heard) {
 
       if (!recognitionEvaluated) {
 
@@ -1791,27 +1827,8 @@ function startRecognition(
     }
 
 
-    // Browser tamat sendiri.
-    // Kalau sudah ada suara, terus nilai.
-    const heard =
-      (
-        finalTranscript +
-        " " +
-        interimTranscript
-      ).trim();
-
-
-    if (heard && !recognitionEvaluated) {
-
-      recognitionEvaluated = true;
-
-      evaluateVoiceResponse(
-        currentVoiceData,
-        currentVoiceIsCP4,
-        currentVoiceIsCP5
-      );
-
-    } else {
+    // Tiada suara
+    if (!recognitionShouldStop) {
 
       setStatus(
         "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
@@ -1821,7 +1838,7 @@ function startRecognition(
 
 
   // ===================================================
-  // START
+  // MULAKAN
   // ===================================================
 
   try {
@@ -1841,7 +1858,7 @@ function startRecognition(
     );
 
     setStatus(
-      "🎤 Mikrofon belum dapat dimulakan. Tekan MULA RAKAM sekali lagi."
+      "🎤 Tekan MULA RAKAM sekali lagi."
     );
   }
 }
@@ -1855,26 +1872,31 @@ function stopRecognition(
   silent = false
 ) {
 
-  const r = recognition;
+  const r =
+    recognition;
 
 
   // ===================================================
   // SILENT STOP
-  // keluar misi / tukar soalan
+  // digunakan semasa tukar soalan / keluar misi
   // ===================================================
 
   if (silent) {
 
-    recognitionSession += 1;
+    recognitionSession++;
 
-    recognitionShouldStop = false;
-    recognitionEvaluated = false;
+    recognitionShouldStop = true;
+    recognitionEvaluated = true;
 
     recognition = null;
     isRecording = false;
 
+
     if (r) {
 
+      // Putuskan event lama dahulu
+      r.onstart = null;
+      r.onspeechstart = null;
       r.onresult = null;
       r.onerror = null;
       r.onend = null;
@@ -1884,8 +1906,10 @@ function stopRecognition(
       } catch (e) {}
     }
 
+
     finalTranscript = "";
     interimTranscript = "";
+
 
     setRecordButton(false);
 
@@ -1904,9 +1928,11 @@ function stopRecognition(
 
   recognitionShouldStop = true;
 
+
   setStatus(
     "⏳ Memproses rakaman..."
   );
+
 
   setMicIndicator(
     false,
@@ -1929,10 +1955,26 @@ function stopRecognition(
   }
 
 
+  // Kalau recognition sudah tamat sendiri
+  isRecording = false;
+
   setRecordButton(false);
 
 
-  if (!recognitionEvaluated) {
+  const heard =
+    (
+      finalTranscript +
+      " " +
+      interimTranscript
+    )
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+  if (
+    heard &&
+    !recognitionEvaluated
+  ) {
 
     recognitionEvaluated = true;
 
@@ -1940,6 +1982,12 @@ function stopRecognition(
       currentVoiceData,
       currentVoiceIsCP4,
       currentVoiceIsCP5
+    );
+
+  } else if (!heard) {
+
+    setStatus(
+      "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
     );
   }
 }
