@@ -1812,6 +1812,14 @@ function startRecognition(
 
   try {
 
+ window.setTimeout(() => {
+
+  if (session !== recognitionSession) {
+    return;
+  }
+
+  try {
+
     r.start();
 
   }
@@ -1833,8 +1841,8 @@ function startRecognition(
       "⚠️ Rakaman belum dapat dimulakan. Cuba sekali lagi."
     );
   }
-}
 
+}, 250);
 
 // =====================================================
 // STOP RECOGNITION
