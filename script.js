@@ -793,24 +793,45 @@ function renderActivity(id) {
 let currentAudio = null;
 
 function speak(src) {
+  // Hentikan audio lama dahulu
   stopSpeech();
 
-  currentAudio =
-    new Audio(src);
+  // Cipta audio baru
+  currentAudio = new Audio(src);
 
-  currentAudio.preload =
-    "auto";
+  // Pastikan audio tidak mute
+  currentAudio.muted = false;
 
-  currentAudio
-    .play()
-    .catch(() => {
-      fb(
-        "🔊 Audio tidak dapat dimainkan. Tekan DENGAR AUDIO sekali lagi.",
-        0
-      );
-    });
+  // Pastikan volume maksimum
+  currentAudio.volume = 1.0;
+
+  // Muatkan audio
+  currentAudio.preload = "auto";
+
+  // Bila audio sudah sedia, mainkan
+  currentAudio.addEventListener(
+    "canplaythrough",
+    function playAudio() {
+
+      if (!currentAudio) return;
+
+      currentAudio.muted = false;
+      currentAudio.volume = 1.0;
+
+      currentAudio
+        .play()
+        .catch(() => {
+          fb(
+            "🔊 Audio tidak dapat dimainkan. Tekan DENGAR AUDIO sekali lagi.",
+            0
+          );
+        });
+    },
+    { once: true }
+  );
+
+  currentAudio.load();
 }
-
 function stopSpeech() {
   if (currentAudio) {
     currentAudio.pause();
