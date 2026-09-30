@@ -887,25 +887,6 @@ function setAudioPlaybackMode() {
 }
 
 
-function setAudioRecordingMode() {
-
-  try {
-
-    if (
-      navigator.audioSession &&
-      "type" in navigator.audioSession
-    ) {
-
-      navigator.audioSession.type = "play-and-record";
-
-    }
-
-  } catch (e) {
-
-    console.log("Audio recording mode tidak tersedia.");
-
-  }
-}
 
 
 // =====================================================
@@ -1906,17 +1887,12 @@ function startRecognition(
   // MULAKAN
   // ===================================================
 
- try {
-
-  // iPhone/iPad masuk mod mikrofon
-  setAudioRecordingMode();
+try {
 
   r.start();
 
 } catch (err) {
 
-  // Kalau rakaman gagal dimulakan,
-  // jangan biarkan audio berada dalam mod mic.
   setAudioPlaybackMode();
 
     recognition = null;
