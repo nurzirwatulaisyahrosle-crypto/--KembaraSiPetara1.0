@@ -1457,7 +1457,7 @@ recordBtn.onclick = () => {
     interimTranscript = "";
 
     // Pulangkan audio session kepada keadaan playback dahulu.
-    setAudioPlaybackMode();
+   
 
     // Mulakan recognition baru untuk Misi 5.
     startRecognition(
