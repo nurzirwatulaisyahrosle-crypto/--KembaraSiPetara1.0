@@ -863,7 +863,7 @@ let currentAudio = null;
 
 
 // =====================================================
-// IOS / IPADOS AUDIO MODE
+// IOS / IPADOS AUDIO SESSION
 // =====================================================
 
 function setAudioPlaybackMode() {
@@ -880,17 +880,43 @@ function setAudioPlaybackMode() {
     }
 
   } catch (e) {
-    // Browser yang tidak menyokong audioSession
-    // akan terus menggunakan audio biasa.
+
+    console.log("Audio playback mode tidak tersedia.");
+
   }
 }
 
+
+function setAudioRecordingMode() {
+
+  try {
+
+    if (
+      navigator.audioSession &&
+      "type" in navigator.audioSession
+    ) {
+
+      navigator.audioSession.type = "play-and-record";
+
+    }
+
+  } catch (e) {
+
+    console.log("Audio recording mode tidak tersedia.");
+
+  }
+}
+
+
+// =====================================================
+// PLAY AUDIO
+// =====================================================
 
 function speak(src) {
 
   stopSpeech();
 
-  // Pulangkan audio iPhone/iPad kepada mod media
+  // Pastikan iPhone/iPad berada dalam mod media
   setAudioPlaybackMode();
 
   currentAudio = new Audio(src);
@@ -906,7 +932,7 @@ function speak(src) {
 
       if (!currentAudio) return;
 
-      // Pastikan mod playback sebelum audio dimainkan
+      // Pastikan sekali lagi sebelum play
       setAudioPlaybackMode();
 
       currentAudio.muted = false;
@@ -932,6 +958,10 @@ function speak(src) {
 }
 
 
+// =====================================================
+// STOP AUDIO
+// =====================================================
+
 function stopSpeech() {
 
   if (currentAudio) {
@@ -943,7 +973,6 @@ function stopSpeech() {
   }
 
 }
-
 // =====================================================
 // FEEDBACK
 // =====================================================
@@ -1809,7 +1838,10 @@ function startRecognition(
   // END
   // ===================================================
 
-  r.onend = () => {
+ r.onend = () => {
+
+    // Mic sudah tamat → pulangkan audio iPhone/iPad ke mod media
+    setAudioPlaybackMode();
 
     if (
       thisSession !== recognitionSession
@@ -1824,7 +1856,6 @@ function startRecognition(
 
 
     isRecording = false;
-
     setRecordButton(false);
 
     setMicIndicator(
@@ -1875,11 +1906,18 @@ function startRecognition(
   // MULAKAN
   // ===================================================
 
-  try {
+ try {
 
-    r.start();
+  // iPhone/iPad masuk mod mikrofon
+  setAudioRecordingMode();
 
-  } catch (error) {
+  r.start();
+
+} catch (err) {
+
+  // Kalau rakaman gagal dimulakan,
+  // jangan biarkan audio berada dalam mod mic.
+  setAudioPlaybackMode();
 
     recognition = null;
     isRecording = false;
