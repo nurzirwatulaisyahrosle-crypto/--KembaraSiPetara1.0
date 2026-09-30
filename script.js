@@ -1990,7 +1990,7 @@ try {
   }
 }
 
-}  // penutup fungsi startRecognition()
+
 
 
 function startRecognitionCP5(d) {
