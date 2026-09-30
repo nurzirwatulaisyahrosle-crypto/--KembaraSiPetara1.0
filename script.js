@@ -1452,21 +1452,19 @@ recordBtn.onclick = () => {
 
     }
 
-    // Reset transcript sesi sebelumnya
-    finalTranscript = "";
-    interimTranscript = "";
+   // Reset transcript sesi sebelumnya
+finalTranscript = "";
+interimTranscript = "";
 
-    // Pulangkan audio session kepada keadaan playback dahulu.
-   
+// Pulangkan audio session kepada keadaan playback dahulu.
+setAudioPlaybackMode();
 
-   // Beri masa sangat pendek untuk audio dilepaskan
-setTimeout(() => {
-  startRecognition(
-    d,
-    false,
-    true
-  );
-}, 100);
+// Mulakan recognition baru untuk Misi 5.
+startRecognition(
+  d,
+  false,
+  true
+);
 
 return;
   }
