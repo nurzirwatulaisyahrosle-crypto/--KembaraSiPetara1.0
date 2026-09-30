@@ -1055,38 +1055,28 @@ function cp1(d, total) {
     document.querySelector("#listenBtn");
 
 listenBtn.onclick = () => {
-
-  // ===================================================
-  // MISI 5 SAHAJA
-  // ===================================================
-
-  if (isCP5) {
-
-    // Jangan biarkan sesi mic lama memegang audio iPhone
-    if (recognition) {
-
-      try {
-        recognition.stop();
-      } catch (e) {}
-
-    }
-
-    isRecording = false;
-    setRecordButton(false);
-
-    // Pulangkan output kepada speaker/media
-    setAudioPlaybackMode();
-
-    speak(d.audio);
-
-    return;
-  }
-
-
-  // MISI 3 & 4 — KEKALKAN
   speak(d.audio);
 
+recordBtn.onclick = () => {
+
+  if (isRecording) {
+
+    stopRecognition(false);
+
+  }
+
+  else {
+
+    startRecognition(
+      d,
+      isCP4,
+      isCP5
+    );
+
+  }
 };
+
+}
   document
     .querySelectorAll(".picture-option")
     .forEach(button => {
