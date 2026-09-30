@@ -1054,9 +1054,39 @@ function cp1(d, total) {
   const listenBtn =
     document.querySelector("#listenBtn");
 
-  listenBtn.onclick = () =>
+listenBtn.onclick = () => {
+
+  // ===================================================
+  // MISI 5 SAHAJA
+  // ===================================================
+
+  if (isCP5) {
+
+    // Jangan biarkan sesi mic lama memegang audio iPhone
+    if (recognition) {
+
+      try {
+        recognition.stop();
+      } catch (e) {}
+
+    }
+
+    isRecording = false;
+    setRecordButton(false);
+
+    // Pulangkan output kepada speaker/media
+    setAudioPlaybackMode();
+
     speak(d.audio);
 
+    return;
+  }
+
+
+  // MISI 3 & 4 — KEKALKAN
+  speak(d.audio);
+
+};
   document
     .querySelectorAll(".picture-option")
     .forEach(button => {
@@ -1401,24 +1431,72 @@ function renderVoice(
     daripada tindakan pengguna menekan butang.
   */
 
-  recordBtn.onclick = () => {
+recordBtn.onclick = () => {
 
-    if (isRecording) {
+  // ===================================================
+  // JIKA SEDANG MERAKAM
+  // ===================================================
 
-      stopRecognition(false);
+  if (isRecording) {
+
+    stopRecognition(false);
+    return;
+
+  }
+
+
+  // ===================================================
+  // MISI 5 SAHAJA — IOS / IPADOS
+  // ===================================================
+
+  if (isCP5) {
+
+    // Pastikan audio yang sedang bermain betul-betul berhenti
+    stopSpeech();
+
+    // Jika ada recognition lama yang masih tertinggal,
+    // tutup dahulu sebelum cipta recognition baru.
+    if (recognition) {
+
+      try {
+        recognition.abort();
+      } catch (e) {}
+
+      recognition = null;
+      isRecording = false;
 
     }
 
-    else {
+    // Reset transcript sesi sebelumnya
+    finalTranscript = "";
+    interimTranscript = "";
 
-      startRecognition(
-        d,
-        isCP4,
-        isCP5
-      );
+    // Pulangkan audio session kepada keadaan playback dahulu.
+    setAudioPlaybackMode();
 
-    }
-  };
+    // Mulakan recognition baru untuk Misi 5.
+    startRecognition(
+      d,
+      false,
+      true
+    );
+
+    return;
+  }
+
+
+  // ===================================================
+  // MISI 3 & MISI 4
+  // KEKALKAN CARA YANG SUDAH BERFUNGSI
+  // ===================================================
+
+  startRecognition(
+    d,
+    isCP4,
+    false
+  );
+
+};
 }
 
 
