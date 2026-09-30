@@ -1060,31 +1060,15 @@ listenBtn.onclick = () => {
 recordBtn.onclick = () => {
 
   if (isRecording) {
-
     stopRecognition(false);
-    return;
-
   }
-
-  // ===============================================
-  // MISI 5 SAHAJA
-  // ===============================================
-  if (isCP5) {
-
-    startRecognitionCP5(d);
-    return;
-
+  else {
+    startRecognition(
+      d,
+      isCP4,
+      isCP5
+    );
   }
-
-  // ===============================================
-  // MISI 3 & 4 — KEKAL CARA ASAL
-  // ===============================================
-  startRecognition(
-    d,
-    isCP4,
-    false
-  );
-
 };
 
 }
@@ -1993,197 +1977,7 @@ try {
 
 
 
-function startRecognitionCP5(d) {
-  const SR = getSpeechRecognition();
 
-  if (!SR) {
-    setStatus("❌ Pelayar ini tidak menyokong rakaman suara.");
-    return;
-  }
-
-  // Hentikan audio sebelum mikrofon Misi 5 bermula
-  stopSpeech();
-
-  // Tutup sesi recognition lama jika masih ada
-  if (recognition) {
-    try {
-      recognition.onend = null;
-      recognition.abort();
-    } catch (e) {}
-
-    recognition = null;
-  }
-
-  finalTranscript = "";
-  interimTranscript = "";
-
-  recognitionShouldStop = false;
-  recognitionEvaluated = false;
-
-  recognitionSession++;
-  const thisSession = recognitionSession;
-
-  const r = new SR();
-  recognition = r;
-
-  r.lang = "ms-MY";
-  r.continuous = false;
-  r.interimResults = true;
-  r.maxAlternatives = 5;
-
-  r.onstart = () => {
-    if (thisSession !== recognitionSession) return;
-
-    isRecording = true;
-
-    setRecordButton(true);
-    setMicIndicator(
-      true,
-      "🎤 Mikrofon aktif — mula bercakap"
-    );
-
-    setStatus(
-      "🎤 Saya sedang mendengar..."
-    );
-  };
-
-  r.onspeechstart = () => {
-    if (thisSession !== recognitionSession) return;
-
-    setStatus(
-      "🎤 Suara dikesan — teruskan bercakap."
-    );
-  };
-
-  r.onresult = (event) => {
-    if (thisSession !== recognitionSession) return;
-
-    let interim = "";
-
-    for (
-      let i = event.resultIndex;
-      i < event.results.length;
-      i++
-    ) {
-      const transcript =
-        event.results[i][0].transcript;
-
-      if (event.results[i].isFinal) {
-        finalTranscript +=
-          transcript + " ";
-      } else {
-        interim +=
-          transcript + " ";
-      }
-    }
-
-    interimTranscript = interim;
-
-    const heard =
-      (finalTranscript + " " + interimTranscript)
-        .replace(/\s+/g, " ")
-        .trim();
-
-    if (heard) {
-      setStatus(
-        "🎤 Dikesan: " + heard
-      );
-    }
-  };
-
-  r.onerror = (event) => {
-    if (thisSession !== recognitionSession) return;
-
-    console.log(
-      "Misi 5 recognition error:",
-      event.error
-    );
-
-    if (
-      event.error === "not-allowed" ||
-      event.error === "service-not-allowed"
-    ) {
-      setStatus(
-        "❌ Mikrofon tidak dibenarkan. Sila benarkan akses mikrofon."
-      );
-    }
-    else if (event.error === "no-speech") {
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-      );
-    }
-  };
-
-  r.onend = () => {
-    // Selepas Misi 5 rakam selesai,
-    // pulangkan iPhone/iPad ke mod speaker media
-    setAudioPlaybackMode();
-
-    if (thisSession !== recognitionSession) return;
-
-    if (recognition === r) {
-      recognition = null;
-    }
-
-    isRecording = false;
-
-    setRecordButton(false);
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
-
-    const heard =
-      (finalTranscript + " " + interimTranscript)
-        .replace(/\s+/g, " ")
-        .trim();
-
-    if (heard) {
-      if (!recognitionEvaluated) {
-        recognitionEvaluated = true;
-
-        evaluateVoiceResponse(
-          d,
-          false,
-          true
-        );
-      }
-
-      return;
-    }
-
-    if (!recognitionShouldStop) {
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-      );
-    }
-  };
-
-  try {
-    r.start();
-  }
-  catch (err) {
-    console.log(
-      "Misi 5 gagal mula recognition:",
-      err
-    );
-
-    setAudioPlaybackMode();
-
-    recognition = null;
-    isRecording = false;
-
-    setRecordButton(false);
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
-
-    setStatus(
-      "🎤 Tekan MULA RAKAM sekali lagi."
-    );
-  }
-}
 // =====================================================
 // STOP RECOGNITION
 // =====================================================
