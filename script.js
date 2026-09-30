@@ -861,12 +861,39 @@ function renderActivity(id) {
 
 let currentAudio = null;
 
+
+// =====================================================
+// IOS / IPADOS AUDIO MODE
+// =====================================================
+
+function setAudioPlaybackMode() {
+
+  try {
+
+    if (
+      navigator.audioSession &&
+      "type" in navigator.audioSession
+    ) {
+
+      navigator.audioSession.type = "playback";
+
+    }
+
+  } catch (e) {
+    // Browser yang tidak menyokong audioSession
+    // akan terus menggunakan audio biasa.
+  }
+}
+
+
 function speak(src) {
 
   stopSpeech();
 
-  currentAudio =
-    new Audio(src);
+  // Pulangkan audio iPhone/iPad kepada mod media
+  setAudioPlaybackMode();
+
+  currentAudio = new Audio(src);
 
   currentAudio.muted = false;
   currentAudio.volume = 1.0;
@@ -878,6 +905,9 @@ function speak(src) {
     function playAudio() {
 
       if (!currentAudio) return;
+
+      // Pastikan mod playback sebelum audio dimainkan
+      setAudioPlaybackMode();
 
       currentAudio.muted = false;
       currentAudio.volume = 1.0;
@@ -892,6 +922,7 @@ function speak(src) {
           );
 
         });
+
     },
 
     { once: true }
@@ -900,6 +931,7 @@ function speak(src) {
   currentAudio.load();
 }
 
+
 function stopSpeech() {
 
   if (currentAudio) {
@@ -907,7 +939,9 @@ function stopSpeech() {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
+
   }
+
 }
 
 // =====================================================
