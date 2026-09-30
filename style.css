@@ -1,4 +1,4 @@
-/* =====================================================
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');/* =====================================================
    GLOBAL
 ===================================================== */
 
@@ -2263,5 +2263,20 @@ and (max-height: 600px) {
 /* Kotak aktiviti dalam kekal putih */
 #activityArea .question-page {
   background: #ffffff !important;
+}
+/* =====================================================
+   FONT KEMBARA PETARA
+   SAMA UNTUK LAPTOP + ANDROID + IPHONE + IPAD
+===================================================== */
+
+html,
+body,
+body *,
+button,
+input,
+textarea,
+select,
+option {
+    font-family: "Comic Neue", "Comic Sans MS", sans-serif !important;
 }
 
