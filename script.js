@@ -1459,14 +1459,16 @@ recordBtn.onclick = () => {
     // Pulangkan audio session kepada keadaan playback dahulu.
    
 
-    // Mulakan recognition baru untuk Misi 5.
-    startRecognition(
-      d,
-      false,
-      true
-    );
+   // Beri masa sangat pendek untuk audio dilepaskan
+setTimeout(() => {
+  startRecognition(
+    d,
+    false,
+    true
+  );
+}, 100);
 
-    return;
+return;
   }
 
 
