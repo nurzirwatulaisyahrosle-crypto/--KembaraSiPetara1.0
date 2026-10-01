@@ -894,47 +894,48 @@ function setAudioPlaybackMode() {
 // =====================================================
 
 function speak(src) {
+
   stopSpeech();
-  
-  // Pastikan audio session dalam mode playback
-  try {
-    if (navigator.audioSession) {
-      navigator.audioSession.type = "playback";
-    }
-  } catch (e) {}
-  
+
+  // Pastikan iPhone/iPad berada dalam mod media
+  setAudioPlaybackMode();
+
   currentAudio = new Audio(src);
-  
+
   currentAudio.muted = false;
   currentAudio.volume = 1.0;
   currentAudio.preload = "auto";
-  
+
   currentAudio.addEventListener(
     "canplaythrough",
+
     function playAudio() {
+
       if (!currentAudio) return;
-      
-      // Pastikan mode tetap playback
-      try {
-        if (navigator.audioSession) {
-          navigator.audioSession.type = "playback";
-        }
-      } catch (e) {}
-      
+
+      // Pastikan sekali lagi sebelum play
+      setAudioPlaybackMode();
+
       currentAudio.muted = false;
       currentAudio.volume = 1.0;
-      
+
       currentAudio
         .play()
         .catch(() => {
-          fb("🔊 Audio tidak dapat dimainkan. Tekan DENGAR AUDIO sekali lagi.", 0);
+
+          fb(
+            "🔊 Audio tidak dapat dimainkan. Tekan DENGAR AUDIO sekali lagi.",
+            0
+          );
+
         });
+
     },
+
     { once: true }
   );
-  
+
   currentAudio.load();
-  
 }
 
 
@@ -997,7 +998,7 @@ function bad() {
     "💪 Hampir betul. Cuba sekali lagi!",
     "👂 Dengar semula dengan teliti.",
     "🌱 Cuba lagi. Kamu pasti boleh!",
-    "🔊 Tekan DENGAR AUDIO dan cuba lagi."
+        "🔊 Tekan DENGAR AUDIO dan cuba lagi."
   ];
 
   return messages[
@@ -1295,6 +1296,7 @@ function cp2(d, total) {
     }
   }
 }
+
 // =====================================================
 // TEXT NORMALIZATION
 // =====================================================
@@ -1433,43 +1435,41 @@ recordBtn.onclick = () => {
   // MISI 5 SAHAJA — IOS / IPADOS
   // ===================================================
 
-if (isCP5) {
-  // PENTING: Jangan abort() recognition yang masih lama
-  // Biarkan ia tamat dengan sendiri
-  
-  if (recognition) {
-    recognitionShouldStop = true;
-    recognitionEvaluated = true;
-    
-    try {
-      recognition.stop();
-    } catch (e) {}
-  }
-  
-  // Tunggu sedikit supaya recognition tutup sepenuhnya
-  setTimeout(() => {
-    // Sekarang baru pulangkan audio ke speaker mode
-    try {
-      if (navigator.audioSession) {
-        navigator.audioSession.type = "playback";
-      }
-    } catch (e) {}
-    
-    // Reset semua state
-    recognition = null;
-    isRecording = false;
-    finalTranscript = "";
-    interimTranscript = "";
-    
-    // Berhenti audio yang sedang bermain
+  if (isCP5) {
+
+    // Pastikan audio yang sedang bermain betul-betul berhenti
     stopSpeech();
-    
-    // Sekarang baru mulakan recognition baru
-    startRecognition(d, false, true);
-  }, 200);
-  
-  return;
-}
+
+    // Jika ada recognition lama yang masih tertinggal,
+    // tutup dahulu sebelum cipta recognition baru.
+    if (recognition) {
+
+      try {
+        recognition.abort();
+      } catch (e) {}
+
+      recognition = null;
+      isRecording = false;
+
+    }
+
+   // Reset transcript sesi sebelumnya
+finalTranscript = "";
+interimTranscript = "";
+
+// Pulangkan audio session kepada keadaan playback dahulu.
+setAudioPlaybackMode();
+
+// Mulakan recognition baru untuk Misi 5.
+startRecognition(
+  d,
+  false,
+  true
+);
+
+return;
+  }
+
 
   // ===================================================
   // MISI 3 & MISI 4
@@ -1999,7 +1999,7 @@ function stopRecognition(silent = false) {
 
     if (silent) {
       finalTranscript = "";
-      interimTranscript = "";
+         interimTranscript = "";
     }
 
     return;
@@ -2280,6 +2280,8 @@ function evaluateVoiceResponse(
 
   }
 }
+
+
 // =====================================================
 // ADVANCE ACTIVITY
 // =====================================================
@@ -3024,3 +3026,4 @@ function loop(time) {
   );
 }
 // redeploy
+
