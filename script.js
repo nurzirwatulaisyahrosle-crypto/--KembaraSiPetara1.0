@@ -1607,509 +1607,135 @@ let currentVoiceIsCP5 = false;
 // START RECOGNITION
 // =====================================================
 
-function startRecognition(
-  d,
-  isCP4 = false,
-  isCP5 = false
-) {
+// Cloudflare audio transcription for Misi 3, 4 and 5.
+// The API key remains on the Cloudflare Worker, never in this game.
+const PETARA_TRANSCRIBE_URL =
+  "https://petara-transkripsi.nurzirwatulaisyah-rosle.workers.dev/transcribe";
+let petaraRecorder = null;
+let petaraStream = null;
+let petaraChunks = [];
+let petaraTimer = null;
+let petaraVoiceSession = 0;
 
-  const SR = getSpeechRecognition();
-
-  if (!SR) {
-
-    setStatus(
-      "⚠️ Rakaman suara tidak disokong oleh pelayar ini."
-    );
-
-    return;
+function cleanupPetaraAudio() {
+  if (petaraTimer) clearTimeout(petaraTimer);
+  petaraTimer = null;
+  if (petaraStream) {
+    petaraStream.getTracks().forEach(track => track.stop());
+    petaraStream = null;
   }
+  petaraRecorder = null;
+  petaraChunks = [];
+  isRecording = false;
+  setRecordButton(false);
+  setMicIndicator(false, "🎤 Mikrofon tidak aktif");
+  setAudioPlaybackMode();
+}
 
-
-  // Pastikan tiada recognition lama tertinggal
-  if (recognition) {
-
-    try {
-      recognition.abort();
-    } catch (e) {}
-
-    recognition = null;
-  }
-
-
+async function startRecognition(d, isCP4 = false, isCP5 = false) {
+  const session = ++petaraVoiceSession;
   stopSpeech();
-
-
-  // Simpan soalan semasa
   currentVoiceData = d;
   currentVoiceIsCP4 = isCP4;
   currentVoiceIsCP5 = isCP5;
-
-
-  // Reset rakaman
   finalTranscript = "";
   interimTranscript = "";
-
-  recognitionShouldStop = false;
-  recognitionEvaluated = false;
-
-  recognitionSession++;
-
-  const thisSession =
-    recognitionSession;
-
-
-  // Recognition BARU setiap kali tekan MULA RAKAM
-  const r =
-    new SR();
-
-  recognition = r;
-
-
-  // Sama seperti UJI MIKROFON
-  r.lang = "ms-MY";
-  r.continuous = false;
-  r.interimResults = true;
-  r.maxAlternatives = 5;
-
-
-  setTranscript(
-    "Mula bertutur..."
-  );
-
-  setStatus(
-    "🎙️ Membuka mikrofon..."
-  );
-
-  setMicIndicator(
-    true,
-    "🎤 Membuka mikrofon..."
-  );
-
-
-  // ===================================================
-  // START
-  // ===================================================
-
-  r.onstart = () => {
-
-    if (
-      thisSession !== recognitionSession
-    ) {
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    setStatus("⚠️ Rakaman suara tidak disokong oleh pelayar ini.");
+    return;
+  }
+  setStatus("🎙️ Membuka mikrofon...");
+  setTranscript("Mula bertutur...");
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    if (session !== petaraVoiceSession) {
+      stream.getTracks().forEach(t => t.stop());
       return;
     }
-
+    petaraStream = stream;
+    const formats = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"];
+    const mimeType = formats.find(t => MediaRecorder.isTypeSupported(t));
+    const recorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
+    petaraRecorder = recorder;
+    petaraChunks = [];
+    recorder.ondataavailable = e => {
+      if (e.data && e.data.size) petaraChunks.push(e.data);
+    };
+    recorder.onerror = () => {
+      if (session !== petaraVoiceSession) return;
+      cleanupPetaraAudio();
+      setStatus("⚠️ Rakaman terganggu. Sila cuba lagi.");
+    };
+    recorder.onstop = async () => {
+      const chunks = petaraChunks.slice();
+      const type = recorder.mimeType || mimeType || "audio/mp4";
+      cleanupPetaraAudio();
+      if (session !== petaraVoiceSession) return;
+      if (!chunks.length) {
+        setStatus("🎤 Tiada audio dirakam. Sila cuba lagi.");
+        return;
+      }
+      setStatus("⏳ Memproses rakaman...");
+      try {
+        const audio = new Blob(chunks, {type});
+        const ext = type.includes("mp4") ? "m4a" : "webm";
+        const form = new FormData();
+        form.append("file", audio, "suara." + ext);
+        const response = await fetch(PETARA_TRANSCRIBE_URL, {
+          method: "POST", body: form
+        });
+        const result = await response.json();
+        if (session !== petaraVoiceSession) return;
+        if (!response.ok) throw new Error(result.error || "Transkripsi gagal");
+        finalTranscript = String(result.text || "").trim();
+        interimTranscript = "";
+        if (!finalTranscript) {
+          setStatus("🎤 Suara belum dapat dikesan. Sila cuba lagi.");
+          setTranscript("Tiada suara yang dapat dikenal pasti.");
+          return;
+        }
+        evaluateVoiceResponse(currentVoiceData, currentVoiceIsCP4, currentVoiceIsCP5);
+      } catch (error) {
+        if (session !== petaraVoiceSession) return;
+        console.warn("PeTara transcription:", error);
+        setStatus("⚠️ Transkripsi tidak berjaya. Semak sambungan internet dan cuba lagi.");
+      }
+    };
+    recorder.start();
     isRecording = true;
-
     setRecordButton(true);
-
-    setMicIndicator(
-      true,
-      "🎙️ Mikrofon aktif — sedang mendengar..."
-    );
-
-    setStatus(
-      "Saya sedang mendengar..."
-    );
-  };
-
-
-  // ===================================================
-  // SPEECH START
-  // ===================================================
-
-  r.onspeechstart = () => {
-
-    if (
-      thisSession !== recognitionSession
-    ) {
-      return;
-    }
-
-    setMicIndicator(
-      true,
-      "🗣️ Suara dikesan"
-    );
-
-    setStatus(
-      "🗣️ Suara sedang dikesan..."
-    );
-  };
-
-
-  // ===================================================
-  // RESULT
-  // ===================================================
-
-  r.onresult = event => {
-
-    if (
-      thisSession !== recognitionSession
-    ) {
-      return;
-    }
-
-
-    let finalText = "";
-    let interimText = "";
-
-
-    for (
-      let i = event.resultIndex;
-      i < event.results.length;
-      i++
-    ) {
-
-      const result =
-        event.results[i];
-
-      const text =
-        result[0].transcript;
-
-
-      if (result.isFinal) {
-
-        finalText +=
-          " " + text;
-
-      } else {
-
-        interimText +=
-          " " + text;
-      }
-    }
-
-
-    if (finalText) {
-
-      finalTranscript +=
-        " " + finalText;
-    }
-
-
-    interimTranscript =
-      interimText;
-
-
-    const display =
-      (
-        finalTranscript +
-        " " +
-        interimTranscript
-      )
-        .replace(/\s+/g, " ")
-        .trim();
-
-
-    if (display) {
-
-      setTranscript(display);
-
-      setStatus(
-        "✅ Suara dikesan."
-      );
-
-      setMicIndicator(
-        true,
-        "🗣️ Suara dikesan"
-      );
-    }
-  };
-
-
-  // ===================================================
-  // ERROR
-  // ===================================================
-
-  r.onerror = event => {
-
-    if (
-      thisSession !== recognitionSession
-    ) {
-      return;
-    }
-
-
-    if (
-      event.error === "aborted"
-    ) {
-      return;
-    }
-
-
-    if (
-      event.error === "not-allowed" ||
-      event.error === "service-not-allowed"
-    ) {
-
-      setStatus(
-        "⚠️ Sila benarkan akses mikrofon."
-      );
-
-      return;
-    }
-
-
-    if (
-      event.error === "no-speech"
-    ) {
-
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-      );
-
-      return;
-    }
-
-
-    if (
-      event.error === "audio-capture"
-    ) {
-
-      setStatus(
-        "⚠️ Mikrofon tidak dapat digunakan. Cuba sekali lagi."
-      );
-
-      return;
-    }
-
-
-    setStatus(
-      "⚠️ Rakaman terganggu. Cuba sekali lagi."
-    );
-  };
-
-
-  // ===================================================
-  // END
-  // ===================================================
-
- r.onend = () => {
-
-    // Mic sudah tamat → pulangkan audio iPhone/iPad ke mod media
-    setAudioPlaybackMode();
-
-    if (
-      thisSession !== recognitionSession
-    ) {
-      return;
-    }
-
-
-    if (recognition === r) {
-      recognition = null;
-    }
-
-
-    isRecording = false;
-    setRecordButton(false);
-
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
-
-
-    const heard =
-      (
-        finalTranscript +
-        " " +
-        interimTranscript
-      )
-        .replace(/\s+/g, " ")
-        .trim();
-
-
-    // Ada suara → terus nilai
-    if (heard) {
-
-      if (!recognitionEvaluated) {
-
-        recognitionEvaluated = true;
-
-        evaluateVoiceResponse(
-          currentVoiceData,
-          currentVoiceIsCP4,
-          currentVoiceIsCP5
-        );
-      }
-
-      return;
-    }
-
-
-    // Tiada suara
-    if (!recognitionShouldStop) {
-
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-      );
-    }
-  };
-
-
-  // ===================================================
-  // MULAKAN
-  // ===================================================
-
-try {
-
-  r.start();
-
-} catch (err) {
-
-  setAudioPlaybackMode();
-
-    recognition = null;
-    isRecording = false;
-
-    setRecordButton(false);
-
-    setMicIndicator(
-      false,
-      "🎤 Mikrofon tidak aktif"
-    );
-
-    setStatus(
-      "🎤 Tekan MULA RAKAM sekali lagi."
-    );
+    setMicIndicator(true, "🎙️ Mikrofon aktif — sedang mendengar...");
+    setStatus("🎙️ Sedang merakam. Sebut jawapan, kemudian tekan BERHENTI RAKAM.");
+    petaraTimer = setTimeout(() => stopRecognition(false), 12000);
+  } catch (error) {
+    if (session !== petaraVoiceSession) return;
+    cleanupPetaraAudio();
+    setStatus("⚠️ Mikrofon tidak dapat dibuka. Benarkan akses mikrofon dan cuba lagi.");
   }
 }
 
-
-
-
-
-// =====================================================
-// STOP RECOGNITION
-// =====================================================
-
 function stopRecognition(silent = false) {
-
-  const r = recognition;
-
-  // ===================================================
-  // TIADA RECOGNITION YANG SEDANG AKTIF
-  // ===================================================
-
-  if (!r) {
-
-    isRecording = false;
-
-    setRecordButton(false);
-
+  if (silent) ++petaraVoiceSession;
+  if (petaraTimer) clearTimeout(petaraTimer);
+  petaraTimer = null;
+  const recorder = petaraRecorder;
+  if (recorder && recorder.state !== "inactive") {
+    if (silent) {
+      recorder.onstop = null;
+      recorder.ondataavailable = null;
+    }
+    try { recorder.stop(); } catch (e) {}
+  }
+  if (silent || !recorder) {
+    cleanupPetaraAudio();
     if (silent) {
       finalTranscript = "";
-         interimTranscript = "";
-    }
-
-    return;
-  }
-
-
-  // ===================================================
-  // TUKAR SOALAN / KELUAR MISI
-  // ===================================================
-
-  if (silent) {
-
-    recognitionShouldStop = true;
-    recognitionEvaluated = true;
-
-    /*
-      PENTING UNTUK IPHONE / SAFARI:
-
-      Jangan:
-      - abort()
-      - buang onend
-      - terus recognition = null
-
-      Biarkan WebKit tutup sesi sendiri.
-    */
-
-    try {
-
-      r.stop();
-
-    } catch (e) {
-
-      if (recognition === r) {
-        recognition = null;
-      }
-
-      isRecording = false;
-
-      finalTranscript = "";
       interimTranscript = "";
-
-      setRecordButton(false);
-
-      setMicIndicator(
-        false,
-        "🎤 Mikrofon tidak aktif"
-      );
     }
-
-    return;
-  }
-
-
-  // ===================================================
-  // MURID TEKAN BERHENTI RAKAM
-  // ===================================================
-
-  recognitionShouldStop = true;
-
-  setStatus(
-    "⏳ Memproses rakaman..."
-  );
-
-  setMicIndicator(
-    false,
-    "⏹️ Rakaman dihentikan"
-  );
-
-  try {
-
-    r.stop();
-
-  } catch (e) {
-
-    if (recognition === r) {
-      recognition = null;
-    }
-
+  } else {
     isRecording = false;
-
     setRecordButton(false);
-
-    const heard =
-      (
-        finalTranscript +
-        " " +
-        interimTranscript
-      )
-        .replace(/\s+/g, " ")
-        .trim();
-
-    if (
-      heard &&
-      !recognitionEvaluated
-    ) {
-
-      recognitionEvaluated = true;
-
-      evaluateVoiceResponse(
-        currentVoiceData,
-        currentVoiceIsCP4,
-        currentVoiceIsCP5
-      );
-
-    } else if (!heard) {
-
-      setStatus(
-        "🎤 Suara belum dapat dikesan. Tekan MULA RAKAM dan cuba lagi."
-      );
-    }
+    setStatus("⏳ Memproses rakaman...");
   }
 }
 
