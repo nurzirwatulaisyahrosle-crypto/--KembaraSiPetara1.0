@@ -292,6 +292,9 @@ function enterWorld() {
   updateHUD();
   resizeWorld();
 
+  // Multiplayer presence is separate from game progression.
+  window.KSPMultiplayer?.start();
+
   requestAnimationFrame(loop);
 }
 
@@ -2642,6 +2645,7 @@ window.addEventListener(
 function loop(time) {
 
   updatePlayer(time);
+  window.KSPMultiplayer?.updatePosition(game.player);
 
   updateCamera();
 
